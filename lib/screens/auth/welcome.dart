@@ -6,7 +6,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.pink,
+      backgroundColor: Colors.deepOrange,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -17,8 +17,8 @@ class WelcomeScreen extends StatelessWidget {
               Column(
                 children: [
                   Image.asset(
-                    'assets/images/tindertec_bg_white_little.png',
-                    height: 150,
+                    'assets/images/logo_tindertec.png',
+                    height: 350,
                   ),
                   const SizedBox(height: 20),
                   const Text(

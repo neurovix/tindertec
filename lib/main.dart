@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/auth/welcome.dart';
 import 'screens/auth/login.dart';
 import 'screens/auth/signin.dart';
-import 'screens/home/home_screen.dart'; // 👈 IMPORTA ESTE
+import 'screens/home/home_screen.dart';
 import 'screens/home/home.dart';
 import 'screens/home/profile.dart';
 import 'screens/home/matches.dart';

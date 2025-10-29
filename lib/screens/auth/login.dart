@@ -52,8 +52,8 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 80),
               Center(
                 child: Image.asset(
-                  'assets/images/tindertec_bg_white_little.png',
-                  height: 120,
+                  'assets/images/logo_tindertec.png',
+                  height: 230,
                 ),
               ),
               const SizedBox(height: 20),
@@ -96,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   labelText: 'Contraseña',
                   labelStyle: const TextStyle(color: Colors.white70),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.1),
+                  fillColor: Colors.pinkAccent,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
