@@ -25,7 +25,7 @@ migrate_working_dir/
 
 # Firebase secrets
 firebase.json
-firebase.indexes.json
+firestore.indexes.json
 firestore.rules
 storage.rules
 lib/firebase_options.dart
