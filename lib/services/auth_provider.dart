@@ -52,4 +52,12 @@ class AuthProvider {
       );
     }
   }
+
+  Future<void> signOut({
+    required BuildContext context
+  }) async {
+    await FirebaseAuth.instance.signOut();
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.pushReplacementNamed(context, "/welcome");
+  }
 }

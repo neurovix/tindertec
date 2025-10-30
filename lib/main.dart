@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:flutter/material.dart';
+import 'package:tindertec/firebase_options.dart';
 import 'screens/auth/welcome.dart';
 import 'screens/auth/login.dart';
 import 'screens/auth/signin.dart';
@@ -9,7 +9,9 @@ import 'screens/home/profile.dart';
 import 'screens/home/matches.dart';
 import 'screens/home/notifications.dart';
 
-Future<void> main() async {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform
   );
