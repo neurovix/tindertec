@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/services/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +12,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  void handleLogin() {
+  void handleLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
@@ -25,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    Navigator.pushReplacementNamed(context, '/home');
+    await AuthProvider().signIn(email: email, password: password, context: context);
   }
 
   @override

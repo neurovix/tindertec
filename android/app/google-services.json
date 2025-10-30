@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "369663764784",
+    "project_id": "tindertec-ec309",
+    "storage_bucket": "tindertec-ec309.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:369663764784:android:93ef61b3a56e06a94bc0f5",
+        "android_client_info": {
+          "package_name": "com.tindertec.tindertec"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHu6OziD7CTYYRtorbUwLTcQYWEURj8EE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

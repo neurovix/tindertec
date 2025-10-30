@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:tindertec/services/auth_provider.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -20,14 +21,15 @@ class _SignInScreenState extends State<SignInScreen> {
   final TextEditingController edadController = TextEditingController();
   final TextEditingController alturaController = TextEditingController();
 
-  void handleSignIn() {
-    final name = nameController.text.trim();
-    final lastname = lastnameController.text.trim();
+  void handleSignIn() async {
+    //final name = nameController.text.trim();
+    //final lastname = lastnameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
-    final edad = edadController.text.trim();
-    final altura = alturaController.text.trim();
+    //final edad = edadController.text.trim();
+    //final altura = alturaController.text.trim();
 
+    /*
     if (name.isEmpty ||
         lastname.isEmpty ||
         email.isEmpty ||
@@ -47,8 +49,9 @@ class _SignInScreenState extends State<SignInScreen> {
       _showError('Favor de seleccionar una especialidad');
       return;
     }
+    */
 
-    Navigator.pushReplacementNamed(context, '/home');
+    await AuthProvider().signUp(email: email, password: password, context: context);
   }
 
   void _showError(String message) {
