@@ -70,7 +70,7 @@ class WelcomeScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   TextButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/signin');
+                      Navigator.pushNamed(context, '/phone_number');
                     },
                     child: const Text(
                       'Crear una cuenta nueva',

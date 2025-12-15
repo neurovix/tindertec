@@ -1,9 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tindertec/firebase_options.dart';
+import 'package:tindertec/screens/auth/email.dart';
+import 'package:tindertec/screens/auth/phone_number.dart';
+import 'package:tindertec/screens/auth/verify_code.dart';
 import 'screens/auth/welcome.dart';
 import 'screens/auth/login.dart';
-import 'screens/auth/signin.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/home/profile.dart';
 import 'screens/home/matches.dart';
@@ -26,7 +28,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'TINDERTEC 💘',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
         useMaterial3: true,
@@ -35,7 +36,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
-        '/signin': (context) => const SignInScreen(),
+        '/phone_number': (context) => const PhoneNumberScreen(),
+        '/verify_code': (context) => const VerifyCodeScreen(),
+        '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),
         '/matches': (context) => MatchesPage(),
