@@ -29,7 +29,7 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/text_welcome');
+              Navigator.pushNamed(context, '/gender');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey,

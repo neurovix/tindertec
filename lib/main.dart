@@ -2,7 +2,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tindertec/firebase_options.dart';
 import 'package:tindertec/screens/auth/birthday.dart';
+import 'package:tindertec/screens/auth/degree.dart';
 import 'package:tindertec/screens/auth/email.dart';
+import 'package:tindertec/screens/auth/gender.dart';
+import 'package:tindertec/screens/auth/habits.dart';
+import 'package:tindertec/screens/auth/interests.dart';
+import 'package:tindertec/screens/auth/looking_for.dart';
 import 'package:tindertec/screens/auth/name.dart';
 import 'package:tindertec/screens/auth/phone_number.dart';
 import 'package:tindertec/screens/auth/text_welcome.dart';
@@ -44,6 +49,11 @@ class MyApp extends StatelessWidget {
         '/text_welcome': (context) => const TextWelcomeScreen(),
         '/name': (context) => const NameScreen(),
         '/birthday': (context) => const BirthdayScreen(),
+        '/gender': (context) => const GenderScreen(),
+        '/interests': (context) => const InterestsScreen(),
+        '/looking_for': (context) => const LookingForScreen(),
+        '/habits': (context) => const HabitsScreen(),
+        '/degree': (context) => const DegreeScreen(),
         '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),
