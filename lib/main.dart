@@ -1,8 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tindertec/firebase_options.dart';
+import 'package:tindertec/screens/auth/birthday.dart';
 import 'package:tindertec/screens/auth/email.dart';
+import 'package:tindertec/screens/auth/name.dart';
 import 'package:tindertec/screens/auth/phone_number.dart';
+import 'package:tindertec/screens/auth/text_welcome.dart';
 import 'package:tindertec/screens/auth/verify_code.dart';
 import 'screens/auth/welcome.dart';
 import 'screens/auth/login.dart';
@@ -38,6 +41,9 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/phone_number': (context) => const PhoneNumberScreen(),
         '/verify_code': (context) => const VerifyCodeScreen(),
+        '/text_welcome': (context) => const TextWelcomeScreen(),
+        '/name': (context) => const NameScreen(),
+        '/birthday': (context) => const BirthdayScreen(),
         '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),
