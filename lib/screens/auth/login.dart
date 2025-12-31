@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tindertec/services/auth_provider.dart';
+import 'package:tindertec/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,6 +9,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final authService = AuthService();
+
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -26,7 +28,16 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    await AuthProvider().signIn(email: email, password: password, context: context);
+    try {
+      await authService.signInWithEmailAndPassword(email, password);
+      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
+    }
   }
 
   @override

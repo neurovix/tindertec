@@ -1,7 +1,5 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:tindertec/firebase_options.dart';
-import 'package:tindertec/services/auth_gate.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/screens/auth/welcome.dart';
 import 'package:tindertec/screens/auth/login.dart';
 import 'package:tindertec/screens/auth/phone_number.dart';
@@ -19,12 +17,16 @@ import 'package:tindertec/screens/home/home_screen.dart';
 import 'package:tindertec/screens/home/profile.dart';
 import 'package:tindertec/screens/home/matches.dart';
 import 'package:tindertec/screens/home/notifications.dart';
+import 'package:tindertec/services/auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+
+  await Supabase.initialize(
+      url: "https://nwsjkagbcngcbbffsudg.supabase.co",
+      anonKey: "sb_publishable_v3_vDQWcPRzFywl_857DbQ_uqONN_xp"
   );
+
   runApp(const MyApp());
 }
 
@@ -39,9 +41,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
         useMaterial3: true,
       ),
-
-      home: const AuthGate(),
-
+      home: AuthGate(),
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
