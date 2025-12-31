@@ -1,31 +1,30 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tindertec/firebase_options.dart';
+import 'package:tindertec/services/auth_gate.dart';
+import 'package:tindertec/screens/auth/welcome.dart';
+import 'package:tindertec/screens/auth/login.dart';
+import 'package:tindertec/screens/auth/phone_number.dart';
+import 'package:tindertec/screens/auth/verify_code.dart';
+import 'package:tindertec/screens/auth/text_welcome.dart';
+import 'package:tindertec/screens/auth/name.dart';
 import 'package:tindertec/screens/auth/birthday.dart';
-import 'package:tindertec/screens/auth/degree.dart';
-import 'package:tindertec/screens/auth/email.dart';
 import 'package:tindertec/screens/auth/gender.dart';
-import 'package:tindertec/screens/auth/habits.dart';
 import 'package:tindertec/screens/auth/interests.dart';
 import 'package:tindertec/screens/auth/looking_for.dart';
-import 'package:tindertec/screens/auth/name.dart';
-import 'package:tindertec/screens/auth/phone_number.dart';
-import 'package:tindertec/screens/auth/text_welcome.dart';
-import 'package:tindertec/screens/auth/verify_code.dart';
-import 'screens/auth/welcome.dart';
-import 'screens/auth/login.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/home/profile.dart';
-import 'screens/home/matches.dart';
-import 'screens/home/notifications.dart';
+import 'package:tindertec/screens/auth/habits.dart';
+import 'package:tindertec/screens/auth/degree.dart';
+import 'package:tindertec/screens/auth/email.dart';
+import 'package:tindertec/screens/home/home_screen.dart';
+import 'package:tindertec/screens/home/profile.dart';
+import 'package:tindertec/screens/home/matches.dart';
+import 'package:tindertec/screens/home/notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform
+    options: DefaultFirebaseOptions.currentPlatform,
   );
-
   runApp(const MyApp());
 }
 
@@ -40,7 +39,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.pinkAccent),
         useMaterial3: true,
       ),
-      initialRoute: '/welcome',
+
+      home: const AuthGate(),
+
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
