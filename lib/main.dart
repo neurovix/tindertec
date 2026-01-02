@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tindertec/screens/auth/password.dart';
+import 'package:tindertec/screens/auth/photos.dart';
 import 'package:tindertec/screens/auth/welcome.dart';
 import 'package:tindertec/screens/auth/login.dart';
 import 'package:tindertec/screens/auth/phone_number.dart';
@@ -55,6 +57,8 @@ class MyApp extends StatelessWidget {
         '/looking_for': (context) => const LookingForScreen(),
         '/habits': (context) => const HabitsScreen(),
         '/degree': (context) => const DegreeScreen(),
+        '/photos': (context) => const PhotoScreen(),
+        '/password': (context) => const PasswordScreen(),
         '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),
