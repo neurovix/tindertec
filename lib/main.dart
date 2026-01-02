@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/screens/auth/password.dart';
 import 'package:tindertec/screens/auth/photos.dart';
@@ -24,9 +25,11 @@ import 'package:tindertec/services/auth_gate.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: ".env");
+
   await Supabase.initialize(
-      url: "https://nwsjkagbcngcbbffsudg.supabase.co",
-      anonKey: "sb_publishable_v3_vDQWcPRzFywl_857DbQ_uqONN_xp"
+      url: dotenv.env['SUPABASE_URL']!,
+      anonKey: dotenv.env['SUPABASE_ANON_KEY']!
   );
 
   runApp(const MyApp());
