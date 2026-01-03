@@ -20,7 +20,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '');
+              Navigator.pushNamed(context, '/invitation');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey,
@@ -57,7 +57,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
               const Center(
                 child: Text(
-                  'Finalmente tu contraseña',
+                  'Ahora tu contraseña',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20,

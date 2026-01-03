@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tindertec/screens/auth/invitation.dart';
 import 'package:tindertec/screens/auth/password.dart';
 import 'package:tindertec/screens/auth/photos.dart';
 import 'package:tindertec/screens/auth/welcome.dart';
@@ -62,6 +63,7 @@ class MyApp extends StatelessWidget {
         '/degree': (context) => const DegreeScreen(),
         '/photos': (context) => const PhotoScreen(),
         '/password': (context) => const PasswordScreen(),
+        '/invitation': (context) => const InvitationScreen(),
         '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),
