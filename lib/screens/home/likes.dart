@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:tindertec/screens/home/user_detail.dart';
 
-class MatchesPage extends StatefulWidget {
-  const MatchesPage({super.key});
+class LikesScreen extends StatefulWidget {
+  const LikesScreen({super.key});
 
   @override
-  State<MatchesPage> createState() => _MatchesPageState();
+  State<LikesScreen> createState() => _LikesScreenState();
 }
 
-class _MatchesPageState extends State<MatchesPage> {
+class _LikesScreenState extends State<LikesScreen> {
   final List<Map<String, dynamic>> matches = [
     {
       'name': 'Andrea',
@@ -50,7 +50,7 @@ class _MatchesPageState extends State<MatchesPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Aqui salen las personas que te han y haz dado like. Sus perfiles de instagram ahora estan disponibles',
+              'Aqui salen las personas que te han dado like',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,

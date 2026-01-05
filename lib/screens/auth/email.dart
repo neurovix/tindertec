@@ -74,6 +74,12 @@ class _EmailScreenState extends State<EmailScreen> {
                   labelText: 'Correo electronico',
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Asegurate de ingresar correctamente tu correo electronico, ya que no podra ser cambiado mas adelante'
+              ),
             ],
           ),
         ),

@@ -57,7 +57,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
               const Center(
                 child: Text(
-                  '¿Puedes darnos tu numero telefonico?',
+                  '¿Puedes darnos tu usuario de instagram?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20,
@@ -69,16 +69,16 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
               const SizedBox(height: 20),
 
               const TextField(
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.text,
                 decoration: InputDecoration(
-                  labelText: 'Numero telefonico',
+                  labelText: 'Ingresa tu usuario de instagram',
                 ),
               ),
 
               const SizedBox(height: 40),
 
               const Text(
-                'Ingresando tu numero, aceptas que te enviemos mensajes relacionados con la verificacion de tu cuenta',
+                'Tu usuario de instagram se mostrara solamente cuando tu y la otra persona hagan match, para que puedan continuar con la conversacion desde fuera, si alguien te da like y tu no respondes con la misma accion, tu instagram no sera visible para la otra persona.',
                 style: TextStyle(fontSize: 13),
               ),
 

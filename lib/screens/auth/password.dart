@@ -20,7 +20,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/invitation');
+              Navigator.pushNamed(context, '/become_premium');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey,
@@ -74,6 +74,12 @@ class _PasswordScreenState extends State<PasswordScreen> {
                 decoration: InputDecoration(
                   labelText: 'Ingresa tu contraseña',
                 ),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Asegurate de ingresar bien tu contraseña, ya que no podras cambiarla en el futuro'
               ),
             ],
           ),

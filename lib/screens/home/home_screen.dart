@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
 import 'matches.dart';
-import 'notifications.dart';
+import 'likes.dart';
 import 'profile.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     HomePage(),
     MatchesPage(),
-    NotificationsPage(),
+    LikesScreen(),
     ProfilePage(),
   ];
 
@@ -49,8 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Matches',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notificaciones',
+            icon: Icon(Icons.thumb_up),
+            label: 'Likes',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

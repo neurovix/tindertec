@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:tindertec/screens/auth/invitation.dart';
+import 'package:tindertec/screens/auth/become_premium.dart';
 import 'package:tindertec/screens/auth/password.dart';
 import 'package:tindertec/screens/auth/photos.dart';
 import 'package:tindertec/screens/auth/welcome.dart';
@@ -18,9 +18,10 @@ import 'package:tindertec/screens/auth/habits.dart';
 import 'package:tindertec/screens/auth/degree.dart';
 import 'package:tindertec/screens/auth/email.dart';
 import 'package:tindertec/screens/home/home_screen.dart';
+import 'package:tindertec/screens/home/premium_details.dart';
 import 'package:tindertec/screens/home/profile.dart';
 import 'package:tindertec/screens/home/matches.dart';
-import 'package:tindertec/screens/home/notifications.dart';
+import 'package:tindertec/screens/home/likes.dart';
 import 'package:tindertec/services/auth_gate.dart';
 
 void main() async {
@@ -63,12 +64,13 @@ class MyApp extends StatelessWidget {
         '/degree': (context) => const DegreeScreen(),
         '/photos': (context) => const PhotoScreen(),
         '/password': (context) => const PasswordScreen(),
-        '/invitation': (context) => const InvitationScreen(),
+        '/become_premium': (context) => const BecomePremiumScreen(),
         '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),
         '/matches': (context) => MatchesPage(),
-        '/notifications': (context) => NotificationsPage(),
+        '/likes': (context) => const LikesScreen(),
+        '/premium_details': (context) => const PremiumDetailsScreen(),
       },
     );
   }

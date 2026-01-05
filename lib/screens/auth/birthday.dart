@@ -120,6 +120,8 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
                   style: TextStyle(fontSize: 13),
                 ),
               ),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),

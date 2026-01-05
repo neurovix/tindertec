@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
+import 'package:tindertec/screens/home/user_detail.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final CardSwiperController cardsController = CardSwiperController();
 
   final List<Map<String, dynamic>> users = [
@@ -167,11 +174,15 @@ class HomePage extends StatelessWidget {
     },
   ];
 
-  HomePage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.pink[300],
+        elevation: 0,
+        centerTitle: true,
+        title: Image.asset('assets/images/logo_tindertec.png', height: 100),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -185,14 +196,24 @@ class HomePage extends StatelessWidget {
                 backCardOffset: const Offset(40, 40),
                 padding: const EdgeInsets.all(24.0),
                 cardBuilder:
-                    (
-                      context,
-                      index,
-                      horizontalThresholdPercentage,
-                      verticalThresholdPercentage,
-                    ) {
-                      final user = users[index];
-                      return Card(
+                  (
+                    context,
+                    index,
+                    horizontalThresholdPercentage,
+                    verticalThresholdPercentage,
+                  ) {
+                    final user = users[index];
+
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => UserDetailPage(user: user),
+                          ),
+                        );
+                      },
+                      child: Card(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -242,8 +263,10 @@ class HomePage extends StatelessWidget {
                             ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                    );
+
+                  },
               ),
             ),
             Padding(
@@ -253,26 +276,17 @@ class HomePage extends StatelessWidget {
                 children: [
                   FloatingActionButton(
                     onPressed: cardsController.undo,
-                    child: Image.asset(
-                        'assets/icons/return.png',
-                        height: 200
-                    ),
+                    child: Image.asset('assets/icons/return.png', height: 200),
                   ),
                   FloatingActionButton(
                     onPressed: () =>
                         cardsController.swipe(CardSwiperDirection.left),
-                    child: Image.asset(
-                      'assets/icons/dislike.png',
-                      height: 200
-                    ),
+                    child: Image.asset('assets/icons/dislike.png', height: 200),
                   ),
                   FloatingActionButton(
                     onPressed: () =>
                         cardsController.swipe(CardSwiperDirection.right),
-                    child: Image.asset(
-                      'assets/icons/like.png',
-                      height: 200
-                    ),
+                    child: Image.asset('assets/icons/like.png', height: 200),
                   ),
                 ],
               ),

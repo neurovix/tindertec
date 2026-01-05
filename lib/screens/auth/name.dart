@@ -85,7 +85,7 @@ class _NameScreenState extends State<NameScreen> {
               ),
 
               const Text(
-                'No lo podras cambiar despues',
+                'No lo podras cambiar despues (Solamente si eres PREMIUM)',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,

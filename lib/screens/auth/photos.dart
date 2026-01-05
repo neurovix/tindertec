@@ -83,6 +83,15 @@ class _PhotoScreenState extends State<PhotoScreen> {
                 ),
               ),
 
+              const SizedBox(height: 10),
+
+              Text(
+                'Elige bien tus fotos, no podras cambiarlas despues',
+                style: TextStyle(
+                  fontSize: 15,
+                ),
+              ),
+
               const SizedBox(height: 25),
 
               GridView.builder(

@@ -23,6 +23,17 @@ create table looking_for (
   name text not null unique
 );
 
+create table invitation_codes (
+  id_invitation_code serial primary key,
+  code text not null unique,
+
+  is_used boolean default false,
+  used_by uuid references users(id_user),
+  used_at timestamp,
+
+  created_at timestamp default now()
+);
+
 create table users (
   id_user uuid primary key references auth.users(id) on delete cascade,
 
@@ -30,8 +41,8 @@ create table users (
   age integer check (age >= 18),
   description text,
 
-  phone_number text,
-  phone_visible boolean default false,
+  instagram_user text,
+  instagram_visible boolean default false,
 
   id_genre integer not null references genres(id_genre),
   id_degree integer not null references degrees(id_degree),
@@ -39,8 +50,16 @@ create table users (
 
   is_active boolean default true,
   profile_completed boolean default false,
+  is_premium boolean default false,
+  premium_until timestamp,
 
   created_at timestamp default now()
+);
+
+create table user_swipes (
+  id_swipe bigint generated always as identity primary key,
+  id_user uuid not null references users(id_user),
+  swiped_at timestamp default now()
 );
 
 create table user_has_interests (
