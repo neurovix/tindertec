@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class DegreeScreen extends StatefulWidget {
   const DegreeScreen({super.key});
@@ -12,6 +13,7 @@ class _DegreeScreenState extends State<DegreeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -23,7 +25,12 @@ class _DegreeScreenState extends State<DegreeScreen> {
             onPressed: selectedDegree == null
                 ? null
                 : () {
-                    Navigator.pushNamed(context, '/photos');
+                    registerData.degree = selectedDegree;
+                    Navigator.pushNamed(
+                        context,
+                        '/interests',
+                        arguments: registerData,
+                    );
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: selectedDegree == null

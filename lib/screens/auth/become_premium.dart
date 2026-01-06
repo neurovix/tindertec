@@ -382,7 +382,11 @@ class _BecomePremiumState extends State<BecomePremiumScreen>
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () {
-                            // Stripe logic here
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/home',
+                                  (route) => false,
+                            );
                           },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,

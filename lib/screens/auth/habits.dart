@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
@@ -44,6 +45,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -55,8 +57,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
             onPressed: selectedHabits.length < 4
                 ? null
                 : () {
-              print(selectedHabits);
-              Navigator.pushNamed(context, '/degree');
+              registerData.habits = selectedHabits;
+              Navigator.pushNamed(
+                  context,
+                  '/description',
+                  arguments: registerData,
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: selectedHabits.length < 4

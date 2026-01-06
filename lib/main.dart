@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/screens/auth/become_premium.dart';
+import 'package:tindertec/screens/auth/description.dart';
 import 'package:tindertec/screens/auth/password.dart';
 import 'package:tindertec/screens/auth/photos.dart';
 import 'package:tindertec/screens/auth/welcome.dart';
 import 'package:tindertec/screens/auth/login.dart';
-import 'package:tindertec/screens/auth/phone_number.dart';
-import 'package:tindertec/screens/auth/verify_code.dart';
+import 'package:tindertec/screens/auth/instagram.dart';
 import 'package:tindertec/screens/auth/text_welcome.dart';
 import 'package:tindertec/screens/auth/name.dart';
 import 'package:tindertec/screens/auth/birthday.dart';
@@ -52,8 +52,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/login': (context) => const LoginScreen(),
-        '/phone_number': (context) => const PhoneNumberScreen(),
-        '/verify_code': (context) => const VerifyCodeScreen(),
+        '/instagram': (context) => const InstagramScreen(),
         '/text_welcome': (context) => const TextWelcomeScreen(),
         '/name': (context) => const NameScreen(),
         '/birthday': (context) => const BirthdayScreen(),
@@ -65,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/photos': (context) => const PhotoScreen(),
         '/password': (context) => const PasswordScreen(),
         '/become_premium': (context) => const BecomePremiumScreen(),
+        '/description': (context) => const DescriptionScreen(),
         '/email': (context) => const EmailScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => ProfilePage(),

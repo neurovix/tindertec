@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
-class PhoneNumberScreen extends StatefulWidget {
-  const PhoneNumberScreen({super.key});
+class InstagramScreen extends StatefulWidget {
+  const InstagramScreen({super.key});
 
   @override
-  State<PhoneNumberScreen> createState() => _PhoneNumberScreenState();
+  State<InstagramScreen> createState() => _InstagramState();
 }
 
-class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
+class _InstagramState extends State<InstagramScreen> {
+  final TextEditingController instagramController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    final String instagram = instagramController.text.trim();
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -20,10 +25,16 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/verify_code');
+              instagram.isEmpty ? null :
+              registerData.instagramUser = instagram;
+              Navigator.pushNamed(
+                  context,
+                  '/password',
+                  arguments: registerData
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
+              backgroundColor: instagram.isEmpty ? Colors.grey : Colors.black,
             ),
             child: const Text(
               'Siguiente',
@@ -68,11 +79,15 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
               const SizedBox(height: 20),
 
-              const TextField(
+              TextField(
                 keyboardType: TextInputType.text,
                 decoration: InputDecoration(
                   labelText: 'Ingresa tu usuario de instagram',
                 ),
+                controller: instagramController,
+                onChanged: (_) {
+                  setState(() {});
+                }
               ),
 
               const SizedBox(height: 40),

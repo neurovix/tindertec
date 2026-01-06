@@ -31,7 +31,7 @@ insert into life_habits (name) values
 ('Entro a todas las clases')
 on conflict do nothing;
 
-insert into genres (name) values
+insert into genders (name) values
 ('Hombre'),
 ('Mujer'),
 ('Prefiero no decirlo')

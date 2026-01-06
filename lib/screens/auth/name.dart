@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class NameScreen extends StatefulWidget {
   const NameScreen({super.key});
@@ -8,22 +9,40 @@ class NameScreen extends StatefulWidget {
 }
 
 class _NameScreenState extends State<NameScreen> {
+  final TextEditingController nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final name = nameController.text.trim();
+    final registerData = RegisterData(name: name);
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
+
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(left: 20, top: 0, right: 20, bottom: 40),
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 40),
         child: SizedBox(
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/birthday');
-            },
+            onPressed: name.isEmpty
+                ? null
+                : () {
+                    Navigator.pushNamed(
+                      context,
+                      '/email',
+                      arguments: registerData,
+                    );
+                  },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
+              backgroundColor: name.isEmpty ? Colors.grey : Colors.black,
             ),
             child: const Text(
               'Siguiente',
@@ -44,13 +63,8 @@ class _NameScreenState extends State<NameScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  height: 40,
-                ),
+                onTap: () => Navigator.pop(context),
+                child: Image.asset('assets/icons/back_arrow.png', height: 40),
               ),
 
               const SizedBox(height: 30),
@@ -59,37 +73,33 @@ class _NameScreenState extends State<NameScreen> {
                 child: Text(
                   'Ahora tu nombre',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              const TextField(
+              TextField(
+                controller: nameController,
                 keyboardType: TextInputType.text,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Ingresa tu nombre',
                 ),
+                onChanged: (_) {
+                  setState(() {});
+                },
               ),
 
               const SizedBox(height: 10),
 
               const Text(
-                'Asi es como aparecera en tu perfil',
-                style: TextStyle(
-                  fontSize: 13,
-                ),
+                'Así es como aparecerá en tu perfil',
+                style: TextStyle(fontSize: 13),
               ),
 
               const Text(
-                'No lo podras cambiar despues (Solamente si eres PREMIUM)',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                'No lo podrás cambiar después (solo PREMIUM)',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
             ],
           ),

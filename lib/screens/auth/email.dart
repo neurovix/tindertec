@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class EmailScreen extends StatefulWidget {
   const EmailScreen({super.key});
@@ -8,8 +9,20 @@ class EmailScreen extends StatefulWidget {
 }
 
 class _EmailScreenState extends State<EmailScreen> {
+  final TextEditingController emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final email = emailController.text.trim();
+    final RegisterData registerData =
+        ModalRoute.of(context)!.settings.arguments as RegisterData;
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -19,11 +32,18 @@ class _EmailScreenState extends State<EmailScreen> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/text_welcome');
-            },
+            onPressed: email.isEmpty
+                ? null
+                : () {
+                    registerData.email = email;
+                    Navigator.pushNamed(
+                        context,
+                        '/gender',
+                        arguments: registerData
+                    );
+                  },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
+              backgroundColor: email.isEmpty ? Colors.grey : Colors.black,
             ),
             child: const Text(
               'Siguiente',
@@ -47,10 +67,7 @@ class _EmailScreenState extends State<EmailScreen> {
                 onTap: () {
                   Navigator.pop(context);
                 },
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  height: 40,
-                ),
+                child: Image.asset('assets/icons/back_arrow.png', height: 40),
               ),
 
               const SizedBox(height: 30),
@@ -59,26 +76,25 @@ class _EmailScreenState extends State<EmailScreen> {
                 child: Text(
                   'Ahora tu correo electronico',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              const TextField(
+              TextField(
+                controller: emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Correo electronico',
-                ),
+                decoration: InputDecoration(labelText: 'Correo electronico'),
+                onChanged: (_) {
+                  setState(() {});
+                },
               ),
 
               const SizedBox(height: 20),
 
               const Text(
-                'Asegurate de ingresar correctamente tu correo electronico, ya que no podra ser cambiado mas adelante'
+                'Asegurate de ingresar correctamente tu correo electronico, ya que no podra ser cambiado mas adelante',
               ),
             ],
           ),

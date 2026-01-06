@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class BirthdayScreen extends StatefulWidget {
   const BirthdayScreen({super.key});
@@ -18,8 +19,11 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
   final List<int> years =
   List.generate(60, (i) => DateTime.now().year - i);
 
+  int age = 1;
+
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -29,10 +33,15 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
           height: 50,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/gender');
+              registerData.age = age;
+              Navigator.pushNamed(
+                context,
+                '/degree',
+                arguments: registerData,
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
+              backgroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -128,6 +137,24 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
       ),
     );
   }
+
+  void calculateAge() {
+    final DateTime today = DateTime.now();
+    final DateTime birthday =
+    DateTime(selectedYear, selectedMonth, selectedDay);
+
+    int years = today.year - birthday.year;
+
+    if (today.month < birthday.month ||
+        (today.month == birthday.month && today.day < birthday.day)) {
+      years--;
+    }
+
+    setState(() {
+      age = years;
+    });
+  }
+
 
   Widget _buildPicker({
     required List<int> items,

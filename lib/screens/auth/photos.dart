@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class PhotoScreen extends StatefulWidget {
   const PhotoScreen({super.key});
@@ -12,6 +13,7 @@ class PhotoScreen extends StatefulWidget {
 class _PhotoScreenState extends State<PhotoScreen> {
   final ImagePicker _picker = ImagePicker();
   final List<File?> _photos = List.generate(6, (_) => null);
+  List<File> get _selectedPhotos => _photos.whereType<File>().toList();
 
   Future<void> _pickImage(int index) async {
     final pickedFile = await _picker.pickImage(
@@ -30,6 +32,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -41,7 +44,13 @@ class _PhotoScreenState extends State<PhotoScreen> {
             onPressed: _photoCount == 0
                 ? null
                 : () {
-              Navigator.pushNamed(context, '/password');
+              registerData.photos = _selectedPhotos;
+
+              Navigator.pushNamed(
+                context,
+                '/instagram',
+                arguments: registerData,
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor:

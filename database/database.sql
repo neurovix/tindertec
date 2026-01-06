@@ -8,8 +8,8 @@ create table life_habits (
   name text not null unique
 );
 
-create table genres (
-  id_genre serial primary key,
+create table genders (
+  id_gender serial primary key,
   name text not null unique
 );
 
@@ -23,17 +23,6 @@ create table looking_for (
   name text not null unique
 );
 
-create table invitation_codes (
-  id_invitation_code serial primary key,
-  code text not null unique,
-
-  is_used boolean default false,
-  used_by uuid references users(id_user),
-  used_at timestamp,
-
-  created_at timestamp default now()
-);
-
 create table users (
   id_user uuid primary key references auth.users(id) on delete cascade,
 
@@ -44,12 +33,13 @@ create table users (
   instagram_user text,
   instagram_visible boolean default false,
 
-  id_genre integer not null references genres(id_genre),
+  id_gender integer not null references genders(id_gender),
   id_degree integer not null references degrees(id_degree),
   id_looking_for integer not null references looking_for(id_looking_for),
+  id_interest integer not null references interests(id_interest),
 
-  is_active boolean default true,
   profile_completed boolean default false,
+
   is_premium boolean default false,
   premium_until timestamp,
 
@@ -62,11 +52,8 @@ create table user_swipes (
   swiped_at timestamp default now()
 );
 
-create table user_has_interests (
-  id_user uuid references users(id_user) on delete cascade,
-  id_interest integer references interests(id_interest),
-  primary key (id_user, id_interest)
-);
+create index idx_user_swipes_user_date
+on user_swipes (id_user, swiped_at);
 
 create table user_has_life_habits (
   id_user uuid references users(id_user) on delete cascade,
@@ -95,5 +82,7 @@ create table matches (
   id_user_1 uuid not null references users(id_user) on delete cascade,
   id_user_2 uuid not null references users(id_user) on delete cascade,
   matched_at timestamp default now(),
+
+  check (id_user_1 < id_user_2),
   unique (id_user_1, id_user_2)
 );

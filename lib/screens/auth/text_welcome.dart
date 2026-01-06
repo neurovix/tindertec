@@ -21,7 +21,7 @@ class _TextWelcomeScreen extends State<TextWelcomeScreen> {
               Navigator.pushNamed(context, '/name');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
+              backgroundColor: Colors.black,
             ),
             child: const Text(
               'Siguiente',

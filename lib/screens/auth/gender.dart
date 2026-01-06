@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class GenderScreen extends StatefulWidget {
   const GenderScreen({super.key});
@@ -12,6 +13,7 @@ class _GenderScreenState extends State<GenderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -23,7 +25,13 @@ class _GenderScreenState extends State<GenderScreen> {
             onPressed: selectedGender == null
                 ? null
                 : () {
-              Navigator.pushNamed(context, '/interests');
+              registerData.gender = selectedGender;
+
+              Navigator.pushNamed(
+                  context,
+                  '/birthday',
+                  arguments: registerData
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor:

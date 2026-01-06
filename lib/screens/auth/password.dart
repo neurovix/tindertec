@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tindertec/models/register_data.dart';
+import 'package:tindertec/services/auth_service.dart';
 
 class PasswordScreen extends StatefulWidget {
   const PasswordScreen({super.key});
@@ -8,8 +11,25 @@ class PasswordScreen extends StatefulWidget {
 }
 
 class _PasswordScreenState extends State<PasswordScreen> {
+  final TextEditingController passwordController = TextEditingController();
+  final authService = AuthService();
+
   @override
   Widget build(BuildContext context) {
+    final password = passwordController.text.trim();
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
+    print(registerData.name);
+    print(registerData.email);
+    print(registerData.gender);
+    print(registerData.age);
+    print(registerData.degree);
+    print(registerData.interest);
+    print(registerData.lookingFor);
+    print(registerData.habits);
+    print(registerData.description);
+    print(registerData.photos);
+    print(registerData.instagramUser);
+
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -19,14 +39,36 @@ class _PasswordScreenState extends State<PasswordScreen> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/become_premium');
+            onPressed:
+              password.isEmpty ? null
+              : () {
+                void handleSupabaseRegister() async {
+                  try {
+                    await authService.signUpWithEmailAndPassword(registerData.email!, password);
+                    // Registrar informacion de usuario
+                    Supabase.instance.client.from("public.users").insert({
+                      'name': registerData.name,
+                      'age': registerData.age,
+                      'description': registerData.description,
+                      'instagram_user': registerData.instagramUser,
+                      'profile_completed': true,
+                    });
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: $e")),
+                      );
+                    }
+                  }
+                }
+
+                Navigator.pushNamed(context, '/become_premium');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey,
+              backgroundColor: password.isEmpty ? Colors.grey : Colors.black,
             ),
             child: const Text(
-              'Siguiente',
+              'Crear cuenta',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -68,12 +110,16 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
               const SizedBox(height: 20),
 
-              const TextField(
+              TextField(
                 keyboardType: TextInputType.text,
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Ingresa tu contraseña',
                 ),
+                controller: passwordController,
+                onChanged: (_) {
+                  setState(() {});
+                }
               ),
 
               const SizedBox(height: 20),

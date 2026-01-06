@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class LookingForScreen extends StatefulWidget {
   const LookingForScreen({super.key});
@@ -39,6 +40,7 @@ class _LookingForScreenState extends State<LookingForScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -50,7 +52,12 @@ class _LookingForScreenState extends State<LookingForScreen> {
             onPressed: selectedInterest == null
                 ? null
                 : () {
-              Navigator.pushNamed(context, '/habits');
+              registerData.lookingFor = selectedInterest;
+              Navigator.pushNamed(
+                  context,
+                  '/habits',
+                  arguments: registerData,
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor:

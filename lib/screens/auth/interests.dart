@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/register_data.dart';
 
 class InterestsScreen extends StatefulWidget {
   const InterestsScreen({super.key});
@@ -12,6 +13,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -23,7 +25,12 @@ class _InterestsScreenState extends State<InterestsScreen> {
             onPressed: selectedInterest == null
                 ? null
                 : () {
-              Navigator.pushNamed(context, '/looking_for');
+              registerData.interest = selectedInterest;
+              Navigator.pushNamed(
+                  context,
+                  '/looking_for',
+                  arguments: registerData
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor:

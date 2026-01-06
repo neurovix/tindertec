@@ -8,14 +8,15 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   String selectedGender = "Hombre";
   String selectedCarrera = '1';
   String selectedInterest = '2';
   String name = 'Fernando Vazquez';
   String age = '21 años';
   String description = 'lorem ipsum';
-  String phone = '528441234567';
+  String instagram = 'fernandovazquez.fv';
   late AnimationController _animationController;
 
   @override
@@ -39,7 +40,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     required String initialValue,
     required ValueChanged<String> onSave,
   }) {
-    final TextEditingController controller = TextEditingController(text: initialValue);
+    final TextEditingController controller = TextEditingController(
+      text: initialValue,
+    );
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -134,6 +137,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                         initialValue: name,
                         onSave: (value) => setState(() => name = value),
                       ),
+                      isPremium: true,
+                      isEditable: true,
                     ),
                     const SizedBox(height: 12),
                     _buildProfileField(
@@ -145,6 +150,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                         initialValue: age,
                         onSave: (value) => setState(() => age = value),
                       ),
+                      isPremium: false,
+                      isEditable: false,
                     ),
                     const SizedBox(height: 12),
                     _buildProfileField(
@@ -156,17 +163,21 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                         initialValue: description,
                         onSave: (value) => setState(() => description = value),
                       ),
+                      isPremium: true,
+                      isEditable: true,
                     ),
                     const SizedBox(height: 12),
                     _buildProfileField(
-                      label: 'Número de teléfono',
-                      value: phone,
-                      icon: Icons.phone_outlined,
+                      label: 'Instagram',
+                      value: instagram,
+                      icon: Icons.webhook,
                       onTap: () => _showEditDialog(
                         label: 'número de teléfono',
-                        initialValue: phone,
-                        onSave: (value) => setState(() => phone = value),
+                        initialValue: instagram,
+                        onSave: (value) => setState(() => instagram = value),
                       ),
+                      isPremium: false,
+                      isEditable: false,
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -183,7 +194,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       value: selectedGender,
                       icon: Icons.wc_outlined,
                       items: const [
-                        DropdownMenuItem(value: 'Hombre', child: Text('Hombre')),
+                        DropdownMenuItem(
+                          value: 'Hombre',
+                          child: Text('Hombre'),
+                        ),
                         DropdownMenuItem(value: 'Mujer', child: Text('Mujer')),
                       ],
                       onChanged: (value) {
@@ -198,35 +212,59 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                       items: const [
                         DropdownMenuItem(
                           value: '1',
-                          child: Text('Ing. en Sistemas Computacionales', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ing. en Sistemas Computacionales',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '2',
-                          child: Text('Ingeniería Eléctrica', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ingeniería Eléctrica',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '3',
-                          child: Text('Ingeniería Electrónica', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ingeniería Electrónica',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '4',
-                          child: Text('Ingeniería Industrial', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ingeniería Industrial',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '5',
-                          child: Text('Ingeniería Mecánica', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ingeniería Mecánica',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '6',
-                          child: Text('Ingeniería Mecatrónica', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ingeniería Mecatrónica',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '7',
-                          child: Text('Ingeniería en Materiales', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ingeniería en Materiales',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: '8',
-                          child: Text('Ing. en Gestión Empresarial', style: TextStyle(fontSize: 14)),
+                          child: Text(
+                            'Ing. en Gestión Empresarial',
+                            style: TextStyle(fontSize: 14),
+                          ),
                         ),
                       ],
                       onChanged: (value) {
@@ -255,12 +293,18 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                         children: [
                           Text(
                             'Version 1.0.0',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             '© ${DateTime.now().year} Aplicación creada por Neurovix',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -282,10 +326,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.red,
-            Colors.pinkAccent,
-          ],
+          colors: [Colors.red, Colors.pinkAccent],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -404,6 +445,8 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     required String value,
     required IconData icon,
     required VoidCallback onTap,
+    required bool isPremium,
+    required bool isEditable,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -420,7 +463,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: isPremium && isEditable ? onTap : null,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -436,6 +479,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   child: Icon(icon, color: Colors.pinkAccent, size: 22),
                 ),
                 const SizedBox(width: 16),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,7 +503,20 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     ],
                   ),
                 ),
-                Icon(Icons.edit_outlined, color: Colors.grey[400], size: 20),
+
+                Visibility(
+                  visible: !isPremium,
+                  child: const Icon(Icons.lock, color: Colors.grey, size: 22),
+                ),
+
+                Visibility(
+                  visible: isPremium && isEditable,
+                  child: const Icon(
+                    Icons.edit,
+                    color: Colors.pinkAccent,
+                    size: 22,
+                  ),
+                ),
               ],
             ),
           ),
@@ -517,7 +574,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   value: value,
                   isExpanded: true,
                   underline: const SizedBox(),
-                  icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
+                  icon: Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Colors.grey[400],
+                  ),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -611,10 +671,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                   ],
                 ),
