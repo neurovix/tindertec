@@ -39,12 +39,12 @@ class _HomePageState extends State<HomePage> {
     final res = await Supabase.instance.client
         .from('users')
         .select('''
-      id_user,
-      name,
-      age,
-      description,
-      user_photos!left(url)
-    ''')
+          id_user,
+          name,
+          age,
+          description,
+          user_photos!left(url)
+        ''')
         .eq('profile_completed', true)
         .neq('id_user', currentUserId)
         .eq('user_photos.is_main', true)
@@ -123,6 +123,44 @@ class _HomePageState extends State<HomePage> {
 
     debugPrint('📊 Total swipes: $_currentIndex');
 
+    final swipedUser = _cards[index];
+    debugPrint('❤️ Liked user: ${swipedUser.id}');
+
+    await Supabase.instance.client.from('user_likes').insert({
+      'id_user_from': currentUser.id,
+      'id_user_to': swipedUser.id,
+    });
+
+    if (_currentIndex % 7 == 0) {
+      debugPrint('🔄 7 swipes reached, loading more users');
+      _loadMoreUsers();
+    }
+  }
+
+  Future<void> _onLike(int index) async {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser == null) return;
+
+    final likedUser = _cards[index];
+
+    debugPrint('❤️ Liking user: ${likedUser.id}');
+
+    await Supabase.instance.client.from('user_likes').insert({
+      'id_user_from': currentUser.id,
+      'id_user_to': likedUser.id,
+    });
+
+    _afterSwipe();
+  }
+
+  void _onDislike(int index) {
+    debugPrint('❌ Disliked user: ${_cards[index].id}');
+    _afterSwipe();
+  }
+
+  void _afterSwipe() {
+    _currentIndex++;
+
     if (_currentIndex % 7 == 0) {
       debugPrint('🔄 7 swipes reached, loading more users');
       _loadMoreUsers();
@@ -171,7 +209,13 @@ class _HomePageState extends State<HomePage> {
                 debugPrint(
                   '➡️ onSwipe | prev: $prev | current: $current | dir: ${direction.name}',
                 );
-                _onSwipe(prev);
+
+                if (direction == CardSwiperDirection.right) {
+                  _onLike(prev); // ❤️
+                } else {
+                  _onDislike(prev); // ❌
+                }
+
                 return true;
               },
               numberOfCardsDisplayed: 3,
