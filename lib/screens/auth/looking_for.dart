@@ -17,7 +17,7 @@ class _LookingForScreenState extends State<LookingForScreen> {
       'image': 'assets/icons/relationship.png',
     },
     {
-      'label': 'Diversion / Corto plazo',
+      'label': 'Diversion/Corto plazo',
       'image': 'assets/icons/party.png',
     },
     {
@@ -25,7 +25,7 @@ class _LookingForScreenState extends State<LookingForScreen> {
       'image': 'assets/icons/study.png',
     },
     {
-      'label': 'Contactos / Negocios',
+      'label': 'Contactos/Negocios',
       'image': 'assets/icons/handshake.png',
     },
     {

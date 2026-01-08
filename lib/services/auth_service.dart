@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
@@ -19,5 +20,10 @@ class AuthService {
     final session = _supabase.auth.currentSession;
     final user = session?.user;
     return user?.email;
+  }
+
+  String? getCurrentUserId() {
+    final session = _supabase.auth.currentSession;
+    return session?.user.id;
   }
 }

@@ -82,9 +82,9 @@ class _DegreeScreenState extends State<DegreeScreen> {
 
                 _degreeOption('Ingenieria en Sistemas Computacionales'),
                 const SizedBox(height: 15),
-                _degreeOption('Ingenieria electrica'),
+                _degreeOption('Ingenieria Electrica'),
                 const SizedBox(height: 15),
-                _degreeOption('Ingenieria electronica'),
+                _degreeOption('Ingenieria Electronica'),
                 const SizedBox(height: 15),
                 _degreeOption('Ingenieria Industrial'),
                 const SizedBox(height: 15),

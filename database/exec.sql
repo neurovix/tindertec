@@ -5,7 +5,7 @@ insert into degrees (name) values
 ('Ingenieria Industrial'),
 ('Ingenieria Mecanica'),
 ('Ingenieria Mecatronica'),
-('Ingenieria en Materiales'),
+('Ingenieria Materiales'),
 ('Ingenieria en Gestion Empresarial')
 on conflict do nothing;
 

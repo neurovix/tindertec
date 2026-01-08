@@ -22,6 +22,12 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
   int age = 1;
 
   @override
+  void initState() {
+    super.initState();
+    calculateAge();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
@@ -91,7 +97,10 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
                       items: days,
                       initialIndex: selectedDay - 1,
                       onChanged: (index) {
-                        setState(() => selectedDay = days[index]);
+                        setState(() {
+                          selectedDay = days[index];
+                        });
+                        calculateAge();
                       },
                       label: 'DD',
                     ),
@@ -102,7 +111,10 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
                       items: months,
                       initialIndex: selectedMonth - 1,
                       onChanged: (index) {
-                        setState(() => selectedMonth = months[index]);
+                        setState(() {
+                          selectedMonth = months[index];
+                        });
+                        calculateAge();
                       },
                       label: 'MM',
                     ),
@@ -113,7 +125,10 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
                       items: years,
                       initialIndex: 0,
                       onChanged: (index) {
-                        setState(() => selectedYear = years[index]);
+                        setState(() {
+                          selectedYear = years[index];
+                        });
+                        calculateAge();
                       },
                       label: 'YYYY',
                     ),
