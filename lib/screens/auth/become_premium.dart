@@ -256,7 +256,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen>
                                 ),
                               ),
                               const Text(
-                                '50 MXN',
+                                '60 MXN',
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w900,

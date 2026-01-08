@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:tindertec/models/user_card.dart';
 
 class UserDetailPage extends StatelessWidget {
-  final Map<String, dynamic> user;
+  final UserCard user;
 
   const UserDetailPage({super.key, required this.user});
 
@@ -11,13 +12,15 @@ class UserDetailPage extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 600,
+            expandedHeight: 500,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              background: Image.network(
-                user['photo_url'],
+              background: user.photos.isNotEmpty
+                  ? Image.network(
+                user.photos.first,
                 fit: BoxFit.cover,
-              ),
+              )
+                  : Container(color: Colors.grey),
             ),
           ),
           SliverToBoxAdapter(
@@ -27,15 +30,15 @@ class UserDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user['name'],
+                    '${user.name}, ${user.age}',
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
-                    user['description'],
+                    user.description ?? 'Sin descripción',
                     style: const TextStyle(fontSize: 16),
                   ),
                 ],

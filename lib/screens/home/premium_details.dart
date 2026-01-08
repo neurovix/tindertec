@@ -275,7 +275,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen>
                                 ),
                               ),
                               const Text(
-                                '50 MXN',
+                                '60 MXN',
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.w900,

@@ -89,9 +89,8 @@ class _ProfilePageState extends State<ProfilePage>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.pink[400]!,
-                    Colors.pink[300]!,
-                    Colors.pink[400]!,
+                    Colors.red[900]!,
+                    Colors.red[900]!,
                   ],
                 ),
               ),
@@ -326,7 +325,7 @@ class _ProfilePageState extends State<ProfilePage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.red, Colors.pinkAccent],
+          colors: [Colors.red[600]!, Colors.red[800]!],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -404,7 +403,7 @@ class _ProfilePageState extends State<ProfilePage>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [Colors.pinkAccent, Colors.pink[600]!],
+                colors: [Colors.pinkAccent, Colors.red[900]!],
               ),
               boxShadow: [
                 BoxShadow(
@@ -473,10 +472,10 @@ class _ProfilePageState extends State<ProfilePage>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.pink[50],
+                    color: Colors.red[900],
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: Colors.pinkAccent, size: 22),
+                  child: Icon(icon, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 16),
 
@@ -513,7 +512,7 @@ class _ProfilePageState extends State<ProfilePage>
                   visible: isPremium && isEditable,
                   child: const Icon(
                     Icons.edit,
-                    color: Colors.pinkAccent,
+                    color: Colors.red,
                     size: 22,
                   ),
                 ),
@@ -551,10 +550,10 @@ class _ProfilePageState extends State<ProfilePage>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.pink[50],
+              color: Colors.red[900],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.pinkAccent, size: 22),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -613,7 +612,7 @@ class _ProfilePageState extends State<ProfilePage>
             icon: Icons.logout,
             title: 'Cerrar sesión',
             subtitle: 'Salir de la aplicación',
-            color: Colors.red,
+            color: Colors.red[900]!,
             onTap: () async {
               await AuthService().signOut();
             },
@@ -623,7 +622,7 @@ class _ProfilePageState extends State<ProfilePage>
             icon: Icons.delete_forever,
             title: 'Eliminar cuenta',
             subtitle: 'Sin cuenta atrás',
-            color: Colors.red,
+            color: Colors.red[900]!,
             onTap: () async {},
           ),
         ],

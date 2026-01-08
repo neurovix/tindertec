@@ -36,7 +36,7 @@ class _LikesScreenState extends State<LikesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.pink[300],
+        backgroundColor: Colors.red[900],
         elevation: 0,
         centerTitle: true,
         title: Image.asset(
@@ -71,12 +71,14 @@ class _LikesScreenState extends State<LikesScreen> {
                   final user = matches[index];
                   return GestureDetector(
                     onTap: () {
+                      /*
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => UserDetailPage(user: user),
                         ),
                       );
+                      */
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
