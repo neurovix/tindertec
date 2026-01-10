@@ -9,13 +9,21 @@ class CardUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textShadow = [
+      Shadow(
+        offset: const Offset(1.0, 1.0),
+        blurRadius: 3.0,
+        color: Colors.black87,
+      ),
+    ];
+
     return GestureDetector(
       onTap: () {
         debugPrint('🟢 Card tapped: ${user.name}');
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => UserDetailPage(user: user),
+            builder: (_) => UserDetailPage(userId: user.id, source: UserDetailSource.swiper),
           ),
         );
       },
@@ -36,8 +44,6 @@ class CardUser extends StatelessWidget {
               ),
             )
                 : Container(color: Colors.grey),
-
-            // GRADIENT
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -46,24 +52,37 @@ class CardUser extends StatelessWidget {
                   end: Alignment.topCenter,
                   colors: [
                     Colors.black.withOpacity(0.7),
-                    Colors.transparent
+                    Colors.transparent,
                   ],
                 ),
               ),
             ),
-
-            // INFO
             Positioned(
               bottom: 20,
               left: 20,
-              right: 20,
-              child: Text(
-                '${user.name}, ${user.age}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${user.name}, ${user.age}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      shadows: textShadow,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.degreeName.toString(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18,
+                      shadows: textShadow,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

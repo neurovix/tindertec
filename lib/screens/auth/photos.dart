@@ -94,10 +94,19 @@ class _PhotoScreenState extends State<PhotoScreen> {
 
               const SizedBox(height: 10),
 
-              Text(
+              const Text(
                 'Elige bien tus fotos, no podras cambiarlas despues',
                 style: TextStyle(
                   fontSize: 15,
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              const Text(
+                'La primer foto, sera tu foto principal, la que aparecera en las cartas a los demas usuarios',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
                 ),
               ),
 

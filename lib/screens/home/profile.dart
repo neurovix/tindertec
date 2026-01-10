@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/services/auth_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -10,14 +11,67 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin {
-  String selectedGender = "Hombre";
-  String selectedCarrera = '1';
-  String selectedInterest = '2';
-  String name = 'Fernando Vazquez';
-  String age = '21 años';
-  String description = 'lorem ipsum';
-  String instagram = 'fernandovazquez.fv';
+  String selectedGender = "";
+  String selectedCarrera = '';
+  String selectedInterest = '';
+  String name = '';
+  String age = '';
+  String description = '';
+  String instagram = '';
+  bool isPremium = false;
+  String userProfileUrl = "";
+
   late AnimationController _animationController;
+
+  Future<void> getUserInformation() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+
+      if (user == null) return;
+
+      final data = await Supabase.instance.client
+          .from('users')
+          .select('''
+            name,
+            age,
+            description,
+            instagram_user,
+            id_gender,
+            id_degree,
+            id_interest,
+            is_premium,
+            user_photos!inner(
+              url,
+              is_main
+            )
+          ''')
+          .eq('id_user', user.id)
+          .eq('user_photos.is_main', true)
+          .single();
+
+      final photos = data['user_photos'] as List;
+
+      final String? photoUrl = photos.isNotEmpty ? photos.first['url'] as String : null;
+
+      setState(() {
+        name = data['name'] ?? '';
+        age = '${data['age']} años';
+        description = data['description'] ?? '';
+        instagram = data['instagram_user'] ?? '';
+
+        selectedGender = data['id_gender'].toString();
+        selectedCarrera = data['id_degree'].toString();
+        selectedInterest = data['id_interest'].toString();
+
+        isPremium = data['is_premium'] as bool? ?? false;
+        userProfileUrl = photoUrl ?? '';
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error cargando perfil: $e')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -27,6 +81,7 @@ class _ProfilePageState extends State<ProfilePage>
       duration: const Duration(milliseconds: 800),
     );
     _animationController.forward();
+    getUserInformation();
   }
 
   @override
@@ -73,6 +128,49 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  String getGender(String value) {
+    switch (value) {
+      case "1":
+        return "Hombre";
+      case "2":
+        return "Mujer";
+      default:
+        return "Prefiero no decirlo";
+    }
+  }
+
+  String getDegree(String value) {
+    switch (value) {
+      case "1":
+        return "Ingenieria en Sistemas Computacionales";
+      case "2":
+        return "Ingenieria Electrica";
+      case "3":
+        return "Ingenieria Electronica";
+      case "4":
+        return "Ingenieria Industrial";
+      case "5":
+        return "Ingenieria Mecanica";
+      case "6":
+        return "Ingenieria Mecatronica";
+      case "7":
+        return "Ingenieria Materiales";
+      default:
+        return "Ingenieria en Gestion Empresarial";
+    }
+  }
+
+  String getInterest(String value) {
+    switch (value) {
+      case "1":
+        return "Hombres";
+      case "2":
+        return "Mujeres";
+      default:
+        return "Todxs";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,7 +212,7 @@ class _ProfilePageState extends State<ProfilePage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildPremiumCard(),
+                    if (!isPremium) _buildPremiumCard(),
                     const SizedBox(height: 24),
                     _buildAvatarSection(),
                     const SizedBox(height: 24),
@@ -136,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage>
                         initialValue: name,
                         onSave: (value) => setState(() => name = value),
                       ),
-                      isPremium: true,
+                      isPremium: isPremium,
                       isEditable: true,
                     ),
                     const SizedBox(height: 12),
@@ -162,7 +260,7 @@ class _ProfilePageState extends State<ProfilePage>
                         initialValue: description,
                         onSave: (value) => setState(() => description = value),
                       ),
-                      isPremium: true,
+                      isPremium: isPremium,
                       isEditable: true,
                     ),
                     const SizedBox(height: 12),
@@ -171,12 +269,12 @@ class _ProfilePageState extends State<ProfilePage>
                       value: instagram,
                       icon: Icons.webhook,
                       onTap: () => _showEditDialog(
-                        label: 'número de teléfono',
+                        label: 'Instagram',
                         initialValue: instagram,
                         onSave: (value) => setState(() => instagram = value),
                       ),
-                      isPremium: false,
-                      isEditable: false,
+                      isPremium: isPremium,
+                      isEditable: true,
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -190,15 +288,9 @@ class _ProfilePageState extends State<ProfilePage>
                     const SizedBox(height: 16),
                     _buildDropdownField(
                       label: 'Género',
+                      valueText: getGender(selectedGender),
                       value: selectedGender,
                       icon: Icons.wc_outlined,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Hombre',
-                          child: Text('Hombre'),
-                        ),
-                        DropdownMenuItem(value: 'Mujer', child: Text('Mujer')),
-                      ],
                       onChanged: (value) {
                         setState(() => selectedGender = value!);
                       },
@@ -206,66 +298,9 @@ class _ProfilePageState extends State<ProfilePage>
                     const SizedBox(height: 12),
                     _buildDropdownField(
                       label: 'Carrera',
+                      valueText: getDegree(selectedCarrera),
                       value: selectedCarrera,
                       icon: Icons.school_outlined,
-                      items: const [
-                        DropdownMenuItem(
-                          value: '1',
-                          child: Text(
-                            'Ing. en Sistemas Computacionales',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '2',
-                          child: Text(
-                            'Ingeniería Eléctrica',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '3',
-                          child: Text(
-                            'Ingeniería Electrónica',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '4',
-                          child: Text(
-                            'Ingeniería Industrial',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '5',
-                          child: Text(
-                            'Ingeniería Mecánica',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '6',
-                          child: Text(
-                            'Ingeniería Mecatrónica',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '7',
-                          child: Text(
-                            'Ingeniería en Materiales',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: '8',
-                          child: Text(
-                            'Ing. en Gestión Empresarial',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ],
                       onChanged: (value) {
                         setState(() => selectedCarrera = value!);
                       },
@@ -273,13 +308,9 @@ class _ProfilePageState extends State<ProfilePage>
                     const SizedBox(height: 12),
                     _buildDropdownField(
                       label: 'Interesado en',
+                      valueText: getInterest(selectedInterest),
                       value: selectedInterest,
                       icon: Icons.favorite_outline,
-                      items: const [
-                        DropdownMenuItem(value: '1', child: Text('Hombres')),
-                        DropdownMenuItem(value: '2', child: Text('Mujeres')),
-                        DropdownMenuItem(value: '3', child: Text('Todxs')),
-                      ],
                       onChanged: (value) {
                         setState(() => selectedInterest = value!);
                       },
@@ -394,47 +425,52 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildAvatarSection() {
-    return Center(
-      child: Stack(
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Colors.pinkAccent, Colors.red[900]!],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.pink.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.person, size: 60, color: Colors.white),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: Icon(Icons.camera_alt, size: 18, color: Colors.pink[600]),
-            ),
+    return Container(
+      height: 420,
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              userProfileUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                color: Colors.grey[300],
+                child: const Icon(
+                  Icons.person,
+                  size: 120,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.6),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -527,8 +563,8 @@ class _ProfilePageState extends State<ProfilePage>
   Widget _buildDropdownField({
     required String label,
     required String value,
+    required String valueText,
     required IconData icon,
-    required List<DropdownMenuItem<String>> items,
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
@@ -569,22 +605,12 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 const SizedBox(height: 4),
-                DropdownButton<String>(
-                  value: value,
-                  isExpanded: true,
-                  underline: const SizedBox(),
-                  icon: Icon(
-                    Icons.keyboard_arrow_down,
-                    color: Colors.grey[400],
+                Text(
+                  valueText,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
                   ),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                  items: items,
-                  onChanged: onChanged,
-                ),
+                )
               ],
             ),
           ),

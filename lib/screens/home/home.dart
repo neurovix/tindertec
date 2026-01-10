@@ -13,18 +13,54 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final CardSwiperController cardsController = CardSwiperController();
-
   final List<UserCard> _cards = [];
   int _currentIndex = 0;
   int _offset = 0;
   bool _isFetching = false;
   bool _hasMoreUsers = true;
+  bool isPremium = false;
 
   @override
   void initState() {
     super.initState();
     debugPrint('🟢 HomePage initState');
-    _loadMoreUsers();
+    _checkAuthAndLoad();
+  }
+
+  Future<void> _checkAuthAndLoad() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      debugPrint('❌ No hay usuario autenticado. Redirigiendo a login.');
+      Navigator.pushReplacementNamed(context, '/welcome');
+      return;
+    }
+    await _loadMoreUsers();
+    await isUserPremium();
+  }
+
+  Future<void> isUserPremium() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      debugPrint('❌ No user para premium check');
+      isPremium = false;
+      setState(() {});
+      return;
+    }
+
+    try {
+      final res = await Supabase.instance.client
+          .from("users")
+          .select('is_premium')
+          .eq('id_user', user.id)
+          .single();
+      isPremium = res['is_premium'] as bool? ?? false;
+      debugPrint('👑 User premium: $isPremium');
+      setState(() {});
+    } catch (e) {
+      debugPrint('❌ Error checking premium: $e');
+      isPremium = false;
+      setState(() {});
+    }
   }
 
   Future<List<UserCard>> fetchUsers({
@@ -43,6 +79,7 @@ class _HomePageState extends State<HomePage> {
           name,
           age,
           description,
+          degrees!inner(name),
           user_photos!left(url)
         ''')
         .eq('profile_completed', true)
@@ -65,30 +102,28 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadMoreUsers() async {
     debugPrint('🔵 _loadMoreUsers() called');
-
     if (_isFetching) {
       debugPrint('⏸️ Already fetching, skipping');
       return;
     }
-
     if (!_hasMoreUsers) {
       debugPrint('🚫 No more users to fetch');
       return;
     }
 
-    _isFetching = true;
-
-    final currentUser = Supabase.instance.client.auth.currentUser;
-    debugPrint('👤 Current auth user: ${currentUser?.id}');
-
-    if (currentUser == null) {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
       debugPrint('❌ No authenticated user');
       _isFetching = false;
+      Navigator.pushNamed(context, '/welcome');
       return;
     }
 
+    _isFetching = true;
+    debugPrint('👤 Current auth user: ${user.id}');
+
     final newUsers = await fetchUsers(
-      currentUserId: currentUser.id,
+      currentUserId: user.id,
       offset: _offset,
     );
 
@@ -106,50 +141,23 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
-  Future<void> _onSwipe(int index) async {
-    debugPrint('➡️ Swipe detected at index: $index');
-    _currentIndex++;
-
-    final currentUser = Supabase.instance.client.auth.currentUser;
-    if (currentUser == null) {
-      debugPrint('❌ Swipe but no auth user');
+  Future<void> _onLike(int index) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      debugPrint('❌ No auth user for like');
       return;
     }
 
-    debugPrint('📝 Saving swipe for user: ${currentUser.id}');
-    await Supabase.instance.client.from('user_swipes').insert({
-      'id_user': currentUser.id,
-    });
-
-    debugPrint('📊 Total swipes: $_currentIndex');
-
-    final swipedUser = _cards[index];
-    debugPrint('❤️ Liked user: ${swipedUser.id}');
-
-    await Supabase.instance.client.from('user_likes').insert({
-      'id_user_from': currentUser.id,
-      'id_user_to': swipedUser.id,
-    });
-
-    if (_currentIndex % 7 == 0) {
-      debugPrint('🔄 7 swipes reached, loading more users');
-      _loadMoreUsers();
-    }
-  }
-
-  Future<void> _onLike(int index) async {
-    final currentUser = Supabase.instance.client.auth.currentUser;
-    if (currentUser == null) return;
-
     final likedUser = _cards[index];
-
     debugPrint('❤️ Liking user: ${likedUser.id}');
-
-    await Supabase.instance.client.from('user_likes').insert({
-      'id_user_from': currentUser.id,
-      'id_user_to': likedUser.id,
-    });
-
+    try {
+      await Supabase.instance.client.from('user_likes').insert({
+        'id_user_from': user.id,
+        'id_user_to': likedUser.id,
+      });
+    } catch (e) {
+      debugPrint('❌ Error inserting like: $e');
+    }
     _afterSwipe();
   }
 
@@ -160,16 +168,37 @@ class _HomePageState extends State<HomePage> {
 
   void _afterSwipe() {
     _currentIndex++;
-
     if (_currentIndex % 7 == 0) {
       debugPrint('🔄 7 swipes reached, loading more users');
       _loadMoreUsers();
     }
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     debugPrint('🧱 build() called | cards: ${_cards.length}');
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      debugPrint('❌ No auth in build, showing login prompt');
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('Por favor, inicia sesión para continuar.'),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/welcome');
+                },
+                child: const Text('Ir a Login'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     if (!_hasMoreUsers && _currentIndex >= _cards.length) {
       debugPrint('🏁 No more users to show');
@@ -209,13 +238,11 @@ class _HomePageState extends State<HomePage> {
                 debugPrint(
                   '➡️ onSwipe | prev: $prev | current: $current | dir: ${direction.name}',
                 );
-
                 if (direction == CardSwiperDirection.right) {
-                  _onLike(prev); // ❤️
+                  _onLike(prev);
                 } else {
-                  _onDislike(prev); // ❌
+                  _onDislike(prev);
                 }
-
                 return true;
               },
               numberOfCardsDisplayed: 3,
@@ -232,14 +259,15 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                FloatingActionButton(
-                  heroTag: 'undo',
-                  onPressed: () {
-                    debugPrint('↩️ Undo');
-                    cardsController.undo();
-                  },
-                  child: const Icon(Icons.arrow_back),
-                ),
+                if (isPremium)
+                  FloatingActionButton(
+                    heroTag: 'undo',
+                    onPressed: () {
+                      debugPrint('↩️ Undo');
+                      cardsController.undo();
+                    },
+                    child: const Icon(Icons.arrow_back),
+                  ),
                 FloatingActionButton(
                   heroTag: 'dislike',
                   onPressed: () {

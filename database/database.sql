@@ -31,7 +31,6 @@ create table users (
   description text,
 
   instagram_user text,
-  instagram_visible boolean default false,
 
   id_gender integer not null references genders(id_gender),
   id_degree integer not null references degrees(id_degree),
@@ -75,14 +74,4 @@ create table user_likes (
   id_user_to uuid not null references users(id_user) on delete cascade,
   created_at timestamp default now(),
   unique (id_user_from, id_user_to)
-);
-
-create table matches (
-  id_match serial primary key,
-  id_user_1 uuid not null references users(id_user) on delete cascade,
-  id_user_2 uuid not null references users(id_user) on delete cascade,
-  matched_at timestamp default now(),
-
-  check (id_user_1 < id_user_2),
-  unique (id_user_1, id_user_2)
 );

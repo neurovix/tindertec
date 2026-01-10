@@ -13,7 +13,8 @@ class _InterestsScreenState extends State<InterestsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
+    final RegisterData registerData =
+        ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -25,16 +26,17 @@ class _InterestsScreenState extends State<InterestsScreen> {
             onPressed: selectedInterest == null
                 ? null
                 : () {
-              registerData.interest = selectedInterest;
-              Navigator.pushNamed(
-                  context,
-                  '/looking_for',
-                  arguments: registerData
-              );
-            },
+                    registerData.interest = selectedInterest;
+                    Navigator.pushNamed(
+                      context,
+                      '/looking_for',
+                      arguments: registerData,
+                    );
+                  },
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-              selectedInterest == null ? Colors.grey : Colors.black,
+              backgroundColor: selectedInterest == null
+                  ? Colors.grey
+                  : Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -66,10 +68,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
 
               const Text(
                 '¿A quien te interesaria ver?',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600),
               ),
 
               const SizedBox(height: 10),
