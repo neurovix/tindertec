@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/screens/auth/welcome.dart';
-import 'package:tindertec/screens/home/home.dart';
 import 'package:tindertec/screens/home/home_screen.dart';
 
 class AuthGate extends StatelessWidget {

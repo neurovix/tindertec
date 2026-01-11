@@ -207,13 +207,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen>
                                 1,
                               ),
                               _buildDivider(),
-                              _buildBenefitRow(
-                                '⭐ Likes diarios',
-                                '30',
-                                'Ilimitados',
-                                2,
-                              ),
-                              _buildDivider(),
                               _buildBenefitRow('⏮️ Retroceder', '❌', '✅', 3),
                               _buildDivider(),
                               _buildBenefitRow('✍️ Editar perfil', '❌', '✅', 4),
@@ -309,7 +302,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen>
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () {
-                            // Stripe logic here
+                            // In App Purchase Logic Here
                           },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -365,7 +358,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen>
                           onTap: () {
                             Navigator.pushNamedAndRemoveUntil(
                               context,
-                              '/home',
+                              '/',
                                   (route) => false,
                             );
                           },

@@ -226,13 +226,6 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen>
                                 1,
                               ),
                               _buildDivider(),
-                              _buildBenefitRow(
-                                '⭐ Likes diarios',
-                                '30',
-                                'Ilimitados',
-                                2,
-                              ),
-                              _buildDivider(),
                               _buildBenefitRow('⏮️ Retroceder', '❌', '✅', 3),
                               _buildDivider(),
                               _buildBenefitRow('✍️ Editar perfil', '❌', '✅', 4),

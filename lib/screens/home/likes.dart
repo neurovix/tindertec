@@ -28,7 +28,8 @@ class _LikesScreenState extends State<LikesScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => UserDetailPage(userId: userId, source: UserDetailSource.likes),
+        builder: (context) =>
+            UserDetailPage(userId: userId, source: UserDetailSource.likes),
       ),
     );
   }
@@ -46,23 +47,12 @@ class _LikesScreenState extends State<LikesScreen> {
       isPremium = userRes['is_premium'] == true;
 
       if (isPremium) {
-        final likesRes = await supabase
-            .from('user_likes')
-            .select('''
-              users!user_likes_id_user_from_fkey (
-                id_user,
-                name,
-                user_photos (
-                  url,
-                  is_main
-                )
-              )
-            ''')
-            .eq('id_user_to', userId);
+        final likesRes = await supabase.rpc(
+          'get_incoming_likes_no_match',
+          params: {'p_user_id': userId},
+        );
 
-        likesUsers = likesRes
-            .map<Map<String, dynamic>>((e) => e['users'])
-            .toList();
+        likesUsers = List<Map<String, dynamic>>.from(likesRes);
       }
     } catch (e) {
       error = 'Error al cargar likes';
@@ -195,27 +185,21 @@ class _LikeCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             photoUrl != null
-                ? Image.network(
-              photoUrl!,
-              fit: BoxFit.cover,
-            )
+                ? Image.network(photoUrl!, fit: BoxFit.cover)
                 : Container(
-              color: Colors.grey.shade300,
-              child: const Icon(
-                Icons.person,
-                size: 80,
-                color: Colors.grey,
-              ),
-            ),
+                    color: Colors.grey.shade300,
+                    child: const Icon(
+                      Icons.person,
+                      size: 80,
+                      color: Colors.grey,
+                    ),
+                  ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.75),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.75)],
                 ),
               ),
             ),
@@ -229,12 +213,7 @@ class _LikeCard extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                      blurRadius: 4,
-                      color: Colors.black54,
-                    )
-                  ],
+                  shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
                 ),
               ),
             ),

@@ -75,3 +75,18 @@ create table user_likes (
   created_at timestamp default now(),
   unique (id_user_from, id_user_to)
 );
+
+create table matches (
+  id_match serial primary key,
+  id_user_1 uuid not null references users(id_user) on delete cascade,
+  id_user_2 uuid not null references users(id_user) on delete cascade,
+  matched_at timestamp default now(),
+  unique (id_user_1, id_user_2),
+  check (id_user_1 < id_user_2)
+);
+
+create index idx_matches_user1 on matches (id_user_1);
+create index idx_matches_user2 on matches (id_user_2);
+
+CREATE INDEX idx_matches_lookup
+ON matches (id_user_1, id_user_2);

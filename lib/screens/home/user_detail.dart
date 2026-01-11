@@ -25,6 +25,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
     return widget.source == UserDetailSource.matches;
   }
 
+  bool get showButtons {
+    return widget.source == UserDetailSource.matches;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -89,7 +93,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
         child: Row(
           children: List.generate(
             user!.photos.length,
-            (index) => Expanded(
+                (index) => Expanded(
               child: Container(
                 height: 3,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -195,6 +199,46 @@ class _UserDetailPageState extends State<UserDetailPage> {
     );
   }
 
+  Future<void> _onLike(String likedUserId) async {
+    final client = Supabase.instance.client;
+    final currentUser = client.auth.currentUser;
+    if (currentUser == null) return;
+
+    try {
+      // 1️⃣ Insertar like (idempotente)
+      await client.from('user_likes').upsert(
+        {
+          'id_user_from': currentUser.id,
+          'id_user_to': likedUserId,
+        },
+        onConflict: 'id_user_from,id_user_to',
+      );
+
+      // 2️⃣ Ver si existe like inverso
+      final reverseLike = await client
+          .from('user_likes')
+          .select()
+          .eq('id_user_from', likedUserId)
+          .eq('id_user_to', currentUser.id)
+          .maybeSingle();
+
+      // 3️⃣ Si existe → crear match
+      if (reverseLike != null) {
+        await client.from('matches').upsert(
+          {
+            'id_user_1': currentUser.id,
+            'id_user_2': likedUserId,
+          },
+          onConflict: 'id_user_1,id_user_2',
+        );
+      }
+
+      Navigator.pop(context);
+    } catch (e) {
+      debugPrint('❌ Error on like/match: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
@@ -256,48 +300,48 @@ class _UserDetailPageState extends State<UserDetailPage> {
                     children: [
                       user!.photos.isNotEmpty
                           ? PageView.builder(
-                              controller: _pageController,
-                              itemCount: user!.photos.length,
-                              onPageChanged: (index) {
-                                setState(() => currentPhotoIndex = index);
-                              },
-                              itemBuilder: (context, index) {
-                                return Image.network(
-                                  user!.photos[index],
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                        if (loadingProgress == null)
-                                          return child;
-                                        return const Center(
-                                          child: CircularProgressIndicator(
-                                            color: Color(0xFFFF6B6B),
-                                          ),
-                                        );
-                                      },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey[200],
-                                      child: const Icon(
-                                        Icons.person,
-                                        size: 100,
-                                        color: Colors.grey,
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            )
+                        controller: _pageController,
+                        itemCount: user!.photos.length,
+                        onPageChanged: (index) {
+                          setState(() => currentPhotoIndex = index);
+                        },
+                        itemBuilder: (context, index) {
+                          return Image.network(
+                            user!.photos[index],
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            loadingBuilder:
+                                (context, child, loadingProgress) {
+                              if (loadingProgress == null)
+                                return child;
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFFF6B6B),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[200],
+                                child: const Icon(
+                                  Icons.person,
+                                  size: 100,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      )
                           : Container(
-                              color: Colors.grey[200],
-                              child: const Icon(
-                                Icons.person,
-                                size: 100,
-                                color: Colors.grey,
-                              ),
-                            ),
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.person,
+                          size: 100,
+                          color: Colors.grey,
+                        ),
+                      ),
                       IgnorePointer(
                         child: Container(
                           decoration: BoxDecoration(
@@ -409,13 +453,75 @@ class _UserDetailPageState extends State<UserDetailPage> {
                         ...user!.habits.map((habit) => _buildHabitItem(habit)),
                       ],
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
               ),
             ],
           ),
+          if (!showButtons)
+            Positioned(
+              bottom: 30,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: FloatingActionButton(
+                        heroTag: 'dislike',
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        backgroundColor: Colors.white,
+                        child: const Icon(
+                          Icons.close,
+                          color: Color(0xFFFF6B6B),
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: FloatingActionButton(
+                        heroTag: 'like',
+                        onPressed: () {
+                          _onLike(widget.userId);
+                        },
+                        backgroundColor: const Color(0xFFFF6B6B),
+                        child: const Icon(
+                          Icons.favorite,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
