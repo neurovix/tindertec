@@ -90,6 +90,179 @@ class _ProfilePageState extends State<ProfilePage>
     super.dispose();
   }
 
+  Future<void> _showDeleteAccountDialog() async {
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Eliminar cuenta',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            'Esta acción es permanente y eliminará toda tu información. '
+                '¿Estás seguro de que deseas continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () async {
+                Navigator.pop(context); // cerrar modal
+                await _deleteAccount(); // eliminar
+              },
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updateUserName(String value) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sesión no válida, vuelve a iniciar sesión'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final res = await client
+          .from('users')
+          .update({'name': value})
+          .eq('id_user', user.id)
+          .select();
+
+      if (res.isEmpty) {
+        throw Exception('Update blocked by RLS');
+      }
+    } catch (e) {
+      debugPrint('❌ Error updating name: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error al actualizar descripción, intenta más tarde',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateUserDescription(String value) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sesión no válida, vuelve a iniciar sesión'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final res = await client
+          .from('users')
+          .update({'description': value})
+          .eq('id_user', user.id)
+          .select();
+
+      if (res.isEmpty) {
+        throw Exception('Update blocked by RLS');
+      }
+    } catch (e) {
+      debugPrint('❌ Error updating description: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error al actualizar descripción, intenta más tarde',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _updateUserInstagram(String value) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sesión no válida, vuelve a iniciar sesión'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final res = await client
+          .from('users')
+          .update({'instagram_user': value})
+          .eq('id_user', user.id)
+          .select();
+
+      if (res.isEmpty) {
+        throw Exception('Update blocked by RLS');
+      }
+    } catch (e) {
+      debugPrint('❌ Error updating instagram: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Error al actualizar descripción, intenta más tarde',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      await Supabase.instance.client.rpc(
+        'delete_user_account',
+        params: {
+          'p_user_id': Supabase.instance.client.auth.currentUser!.id,
+        },
+      );
+
+      await Supabase.instance.client.auth.signOut();
+
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/login',
+            (_) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al eliminar cuenta: $e")),
+      );
+      debugPrint("Error: $e");
+    }
+  }
+
   Future<void> _showEditDialog({
     required String label,
     required String initialValue,
@@ -232,7 +405,10 @@ class _ProfilePageState extends State<ProfilePage>
                       onTap: () => _showEditDialog(
                         label: 'nombre',
                         initialValue: name,
-                        onSave: (value) => setState(() => name = value),
+                        onSave: (value) async {
+                          await _updateUserName(value);
+                          setState(() => name = value);
+                        },
                       ),
                       isPremium: isPremium,
                       isEditable: true,
@@ -258,7 +434,10 @@ class _ProfilePageState extends State<ProfilePage>
                       onTap: () => _showEditDialog(
                         label: 'descripción',
                         initialValue: description,
-                        onSave: (value) => setState(() => description = value),
+                        onSave: (value) async {
+                          await _updateUserDescription(value);
+                          setState(() => description = value);
+                        },
                       ),
                       isPremium: isPremium,
                       isEditable: true,
@@ -271,7 +450,10 @@ class _ProfilePageState extends State<ProfilePage>
                       onTap: () => _showEditDialog(
                         label: 'Instagram',
                         initialValue: instagram,
-                        onSave: (value) => setState(() => instagram = value),
+                        onSave: (value) async {
+                          await _updateUserInstagram(value);
+                          setState(() => instagram = value);
+                        },
                       ),
                       isPremium: isPremium,
                       isEditable: true,
@@ -649,7 +831,7 @@ class _ProfilePageState extends State<ProfilePage>
             title: 'Eliminar cuenta',
             subtitle: 'Sin cuenta atrás',
             color: Colors.red[900]!,
-            onTap: () async {},
+            onTap: _showDeleteAccountDialog,
           ),
         ],
       ),

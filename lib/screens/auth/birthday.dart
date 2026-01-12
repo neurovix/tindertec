@@ -12,7 +12,7 @@ class BirthdayScreen extends StatefulWidget {
 class _BirthdayScreenState extends State<BirthdayScreen> {
   int selectedDay = 1;
   int selectedMonth = 1;
-  int selectedYear = 2000;
+  int selectedYear = DateTime.now().year;
 
   final List<int> days = List.generate(31, (i) => i + 1);
   final List<int> months = List.generate(12, (i) => i + 1);
@@ -38,16 +38,34 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
         child: SizedBox(
           height: 50,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: age >= 18
+                ? () {
               registerData.age = age;
               Navigator.pushNamed(
                 context,
                 '/degree',
                 arguments: registerData,
               );
+            }
+                : () {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Edad insuficiente'),
+                  content: const Text(
+                    'Debes ser mayor de 18 años para utilizar esta aplicación.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Entendido'),
+                    ),
+                  ],
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
+              backgroundColor: age >= 18 ? Colors.black : Colors.grey,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -138,10 +156,24 @@ class _BirthdayScreenState extends State<BirthdayScreen> {
 
               const SizedBox(height: 20),
 
-              const Center(
-                child: Text(
-                  'Tu perfil muestra tu edad, no tu fecha de nacimiento',
-                  style: TextStyle(fontSize: 13),
+              Center(
+                child: Column(
+                  children: [
+                    const Text(
+                      'Tu perfil muestra tu edad, no tu fecha de nacimiento',
+                      style: TextStyle(fontSize: 13),
+                    ),
+                    const SizedBox(height: 10),
+                    if (age < 18)
+                      const Text(
+                        'Debes ser mayor de 18 años',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
 
