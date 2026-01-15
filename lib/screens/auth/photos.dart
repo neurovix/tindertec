@@ -13,6 +13,7 @@ class PhotoScreen extends StatefulWidget {
 class _PhotoScreenState extends State<PhotoScreen> {
   final ImagePicker _picker = ImagePicker();
   final List<File?> _photos = List.generate(6, (_) => null);
+
   List<File> get _selectedPhotos => _photos.whereType<File>().toList();
 
   Future<void> _pickImage(int index) async {
@@ -20,7 +21,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
       source: ImageSource.gallery,
       imageQuality: 80,
     );
-
     if (pickedFile != null) {
       setState(() {
         _photos[index] = File(pickedFile.path);
@@ -35,7 +35,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
     final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
-
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
         child: SizedBox(
@@ -45,7 +44,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
                 ? null
                 : () {
               registerData.photos = _selectedPhotos;
-
               Navigator.pushNamed(
                 context,
                 '/instagram',
@@ -53,8 +51,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor:
-              _photoCount == 0 ? Colors.grey.shade300 : Colors.black,
+              backgroundColor: _photoCount == 0 ? Colors.grey.shade300 : Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -70,7 +67,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
           ),
         ),
       ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -81,9 +77,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
                 onTap: () => Navigator.pop(context),
                 child: const Icon(Icons.arrow_back, size: 28),
               ),
-
               const SizedBox(height: 30),
-
               const Text(
                 'Agrega tus fotos',
                 style: TextStyle(
@@ -91,84 +85,83 @@ class _PhotoScreenState extends State<PhotoScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-
               const SizedBox(height: 10),
-
               const Text(
                 'Elige bien tus fotos, no podras cambiarlas despues',
                 style: TextStyle(
                   fontSize: 15,
                 ),
               ),
-
               const SizedBox(height: 15),
-
               const Text(
                 'La primer foto, sera tu foto principal, la que aparecera en las cartas a los demas usuarios',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
                 ),
               ),
-
               const SizedBox(height: 25),
-
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: 6,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
-                  childAspectRatio: 0.7,
-                ),
-                itemBuilder: (context, index) {
-                  final photo = _photos[index];
-
-                  return GestureDetector(
-                    onTap: () => _pickImage(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(18),
-                        image: photo != null
-                            ? DecorationImage(
-                          image: FileImage(photo),
-                          fit: BoxFit.cover,
-                        )
-                            : null,
-                      ),
-                      child: photo == null
-                          ? const Center(
-                        child: Icon(
-                          Icons.add,
-                          size: 40,
-                          color: Colors.black54,
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: 6,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 15,
+                          crossAxisSpacing: 15,
+                          childAspectRatio: 0.7,
                         ),
-                      )
-                          : null,
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 30),
-
-              Center(
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$_photoCount/6',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
+                        itemBuilder: (context, index) {
+                          final photo = _photos[index];
+                          return GestureDetector(
+                            onTap: () => _pickImage(index),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(18),
+                                image: photo != null
+                                    ? DecorationImage(
+                                  image: FileImage(photo),
+                                  fit: BoxFit.cover,
+                                )
+                                    : null,
+                              ),
+                              child: photo == null
+                                  ? const Center(
+                                child: Icon(
+                                  Icons.add,
+                                  size: 40,
+                                  color: Colors.black54,
+                                ),
+                              )
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      Center(
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$_photoCount/6',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

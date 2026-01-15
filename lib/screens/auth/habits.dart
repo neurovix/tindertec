@@ -48,7 +48,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
-
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
         child: SizedBox(
@@ -59,15 +58,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 : () {
               registerData.habits = selectedHabits;
               Navigator.pushNamed(
-                  context,
-                  '/description',
-                  arguments: registerData,
+                context,
+                '/description',
+                arguments: registerData,
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: selectedHabits.length < 4
-                  ? Colors.grey
-                  : Colors.black,
+              backgroundColor: selectedHabits.length < 4 ? Colors.grey : Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -83,7 +80,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ),
         ),
       ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -94,9 +90,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 onTap: () => Navigator.pop(context),
                 child: const Icon(Icons.arrow_back, size: 28),
               ),
-
               const SizedBox(height: 30),
-
               const Text(
                 'Hablemos sobre hábitos\nde tu estilo de vida',
                 style: TextStyle(
@@ -104,9 +98,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-
               const SizedBox(height: 10),
-
               const Text(
                 'Selecciona mínimo 4',
                 style: TextStyle(
@@ -114,43 +106,37 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   color: Colors.black54,
                 ),
               ),
-
               const SizedBox(height: 25),
-
               Expanded(
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 12,
-                  children: habits.map((habit) {
-                    final bool isSelected =
-                    selectedHabits.contains(habit);
-
-                    return GestureDetector(
-                      onTap: () => toggleHabit(habit),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.black
-                              : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          habit,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? Colors.white
-                                : Colors.black,
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 12,
+                    children: habits.map((habit) {
+                      final bool isSelected = selectedHabits.contains(habit);
+                      return GestureDetector(
+                        onTap: () => toggleHabit(habit),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected ? Colors.black : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            habit,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.white : Colors.black,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ],

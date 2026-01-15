@@ -51,7 +51,9 @@ class _ProfilePageState extends State<ProfilePage>
 
       final photos = data['user_photos'] as List;
 
-      final String? photoUrl = photos.isNotEmpty ? photos.first['url'] as String : null;
+      final String? photoUrl = photos.isNotEmpty
+          ? photos.first['url'] as String
+          : null;
 
       setState(() {
         name = data['name'] ?? '';
@@ -67,9 +69,9 @@ class _ProfilePageState extends State<ProfilePage>
         userProfileUrl = photoUrl ?? '';
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error cargando perfil: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error cargando perfil: $e')));
     }
   }
 
@@ -105,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           content: const Text(
             'Esta acción es permanente y eliminará toda tu información. '
-                '¿Estás seguro de que deseas continuar?',
+            '¿Estás seguro de que deseas continuar?',
           ),
           actions: [
             TextButton(
@@ -159,9 +161,7 @@ class _ProfilePageState extends State<ProfilePage>
       debugPrint('❌ Error updating name: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Error al actualizar descripción, intenta más tarde',
-          ),
+          content: Text('Error al actualizar descripción, intenta más tarde'),
         ),
       );
     }
@@ -194,9 +194,7 @@ class _ProfilePageState extends State<ProfilePage>
       debugPrint('❌ Error updating description: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Error al actualizar descripción, intenta más tarde',
-          ),
+          content: Text('Error al actualizar descripción, intenta más tarde'),
         ),
       );
     }
@@ -229,9 +227,7 @@ class _ProfilePageState extends State<ProfilePage>
       debugPrint('❌ Error updating instagram: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Error al actualizar descripción, intenta más tarde',
-          ),
+          content: Text('Error al actualizar descripción, intenta más tarde'),
         ),
       );
     }
@@ -241,24 +237,18 @@ class _ProfilePageState extends State<ProfilePage>
     try {
       await Supabase.instance.client.rpc(
         'delete_user_account',
-        params: {
-          'p_user_id': Supabase.instance.client.auth.currentUser!.id,
-        },
+        params: {'p_user_id': Supabase.instance.client.auth.currentUser!.id},
       );
 
       await Supabase.instance.client.auth.signOut();
 
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/login',
-            (_) => false,
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al eliminar cuenta: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error al eliminar cuenta: $e")));
       debugPrint("Error: $e");
     }
   }
@@ -359,10 +349,7 @@ class _ProfilePageState extends State<ProfilePage>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.red[900]!,
-                    Colors.red[900]!,
-                  ],
+                  colors: [Colors.red[900]!, Colors.red[900]!],
                 ),
               ),
               child: FlexibleSpaceBar(
@@ -511,11 +498,60 @@ class _ProfilePageState extends State<ProfilePage>
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            '© ${DateTime.now().year} Aplicación creada por Neurovix',
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
+
+                          Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '© ${DateTime.now().year} Aplicación creada por ',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Creadores'),
+                                        content: const Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                          children: [
+                                            Text('Nombre: Fernando Vazquez'),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Email: fervazquez@neurovix.com.mx',
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Posicion: Programador',
+                                            ),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: const Text('Cerrar'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Neurovix',
+                                    style: TextStyle(
+                                      color: Colors.blueAccent,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -529,6 +565,13 @@ class _ProfilePageState extends State<ProfilePage>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Divider(height: 1, color: Colors.grey.shade200),
     );
   }
 
@@ -631,11 +674,7 @@ class _ProfilePageState extends State<ProfilePage>
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: Colors.grey[300],
-                child: const Icon(
-                  Icons.person,
-                  size: 120,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.person, size: 120, color: Colors.white),
               ),
             ),
 
@@ -644,10 +683,7 @@ class _ProfilePageState extends State<ProfilePage>
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.6),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.6), Colors.transparent],
                 ),
               ),
             ),
@@ -728,11 +764,7 @@ class _ProfilePageState extends State<ProfilePage>
 
                 Visibility(
                   visible: isPremium && isEditable,
-                  child: const Icon(
-                    Icons.edit,
-                    color: Colors.red,
-                    size: 22,
-                  ),
+                  child: const Icon(Icons.edit, color: Colors.red, size: 22),
                 ),
               ],
             ),
@@ -787,12 +819,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  valueText,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                  ),
-                )
+                Text(valueText, style: TextStyle(fontWeight: FontWeight.w700)),
               ],
             ),
           ),
