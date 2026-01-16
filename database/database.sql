@@ -33,7 +33,10 @@ create table users (
   instagram_user text,
 
   id_gender integer not null references genders(id_gender),
+
   id_degree integer not null references degrees(id_degree),
+  custom_degree text null,
+
   id_looking_for integer not null references looking_for(id_looking_for),
   id_interest integer not null references interests(id_interest),
 

@@ -6,7 +6,8 @@ insert into degrees (name) values
 ('Ingenieria Mecanica'),
 ('Ingenieria Mecatronica'),
 ('Ingenieria Materiales'),
-('Ingenieria en Gestion Empresarial')
+('Ingenieria en Gestion Empresarial'),
+('Otra')
 on conflict do nothing;
 
 insert into life_habits (name) values

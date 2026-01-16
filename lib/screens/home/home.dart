@@ -21,6 +21,22 @@ class _HomePageState extends State<HomePage> {
   bool _hasMoreUsers = true;
   bool isPremium = false;
 
+  void _showAlreadyLikedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ups 😅'),
+        content: const Text('Ya has dado like a este usuario'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -103,13 +119,33 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _onLike(UserCard likedUser) async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
+    final client = Supabase.instance.client;
+    final currentUser = client.auth.currentUser;
+    if (currentUser == null) return;
 
-    await Supabase.instance.client.from('user_likes').insert({
-      'id_user_from': user.id,
-      'id_user_to': likedUser.id,
-    });
+    try {
+      final alreadyLiked = await client
+          .from('user_likes')
+          .select('id_like')
+          .eq('id_user_from', currentUser.id)
+          .eq('id_user_to', likedUser.id)
+          .maybeSingle();
+
+      // 🔥 CLAVE: verificar si el widget sigue montado
+      if (!mounted) return;
+
+      if (alreadyLiked != null) {
+        _showAlreadyLikedDialog(context);
+        return;
+      }
+
+      await client.from('user_likes').insert({
+        'id_user_from': currentUser.id,
+        'id_user_to': likedUser.id,
+      });
+    } catch (e) {
+      debugPrint('❌ Error on like: $e');
+    }
   }
 
   void _onDislike(UserCard user) {}

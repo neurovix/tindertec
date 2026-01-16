@@ -20,6 +20,7 @@ class _ProfilePageState extends State<ProfilePage>
   String instagram = '';
   bool isPremium = false;
   String userProfileUrl = "";
+  String? customDegree;
 
   late AnimationController _animationController;
 
@@ -38,6 +39,7 @@ class _ProfilePageState extends State<ProfilePage>
             instagram_user,
             id_gender,
             id_degree,
+            custom_degree,
             id_interest,
             is_premium,
             user_photos!inner(
@@ -64,6 +66,8 @@ class _ProfilePageState extends State<ProfilePage>
         selectedGender = data['id_gender'].toString();
         selectedCarrera = data['id_degree'].toString();
         selectedInterest = data['id_interest'].toString();
+
+        customDegree = data['custom_degree'];
 
         isPremium = data['is_premium'] as bool? ?? false;
         userProfileUrl = photoUrl ?? '';
@@ -303,23 +307,31 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   String getDegree(String value) {
+    if (value == "9") {
+      return (customDegree != null && customDegree!.isNotEmpty)
+          ? customDegree!
+          : "Otra";
+    }
+
     switch (value) {
       case "1":
-        return "Ingenieria en Sistemas Computacionales";
+        return "Ingeniería en Sistemas Computacionales";
       case "2":
-        return "Ingenieria Electrica";
+        return "Ingeniería Eléctrica";
       case "3":
-        return "Ingenieria Electronica";
+        return "Ingeniería Electrónica";
       case "4":
-        return "Ingenieria Industrial";
+        return "Ingeniería Industrial";
       case "5":
-        return "Ingenieria Mecanica";
+        return "Ingeniería Mecánica";
       case "6":
-        return "Ingenieria Mecatronica";
+        return "Ingeniería Mecatrónica";
       case "7":
-        return "Ingenieria Materiales";
+        return "Ingeniería en Materiales";
+      case "8":
+        return "Ingeniería en Gestión Empresarial";
       default:
-        return "Ingenieria en Gestion Empresarial";
+        return "";
     }
   }
 
@@ -528,7 +540,7 @@ class _ProfilePageState extends State<ProfilePage>
                                             ),
                                             SizedBox(height: 8),
                                             Text(
-                                              'Posicion: Programador',
+                                              'Posicion: CEO & Programador',
                                             ),
                                           ],
                                         ),

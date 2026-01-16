@@ -52,6 +52,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
             age,
             description,
             instagram_user,
+            custom_degree,
       
             user_photos!left(url),
       
@@ -199,13 +200,52 @@ class _UserDetailPageState extends State<UserDetailPage> {
     );
   }
 
+  void _showAlreadyLikedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ups 😅'),
+        content: const Text('Ya has dado like a este usuario'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMatchDialog(BuildContext context, String userName) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => MatchDialog(userName: userName),
+    ).then((_) {
+      // Cerrar la página de detalles después de cerrar el modal
+      Navigator.pop(context);
+    });
+  }
+
   Future<void> _onLike(String likedUserId) async {
     final client = Supabase.instance.client;
     final currentUser = client.auth.currentUser;
     if (currentUser == null) return;
 
     try {
-      // 1️⃣ Insertar like (idempotente)
+      final alreadyLiked = await client
+          .from('user_likes')
+          .select('id_like')
+          .eq('id_user_from', currentUser.id)
+          .eq('id_user_to', likedUserId)
+          .maybeSingle();
+
+      if (alreadyLiked != null) {
+        _showAlreadyLikedDialog(context);
+        return;
+      }
+
+      // Insertar like
       await client.from('user_likes').upsert(
         {
           'id_user_from': currentUser.id,
@@ -214,26 +254,21 @@ class _UserDetailPageState extends State<UserDetailPage> {
         onConflict: 'id_user_from,id_user_to',
       );
 
-      // 2️⃣ Ver si existe like inverso
-      final reverseLike = await client
-          .from('user_likes')
-          .select()
-          .eq('id_user_from', likedUserId)
-          .eq('id_user_to', currentUser.id)
-          .maybeSingle();
+      // Intentar crear match vía RPC
+      final result = await client.rpc(
+        'create_match_if_mutual_like',
+        params: {
+          'p_user_a': currentUser.id,
+          'p_user_b': likedUserId,
+        },
+      );
 
-      // 3️⃣ Si existe → crear match
-      if (reverseLike != null) {
-        await client.from('matches').upsert(
-          {
-            'id_user_1': currentUser.id,
-            'id_user_2': likedUserId,
-          },
-          onConflict: 'id_user_1,id_user_2',
-        );
+      // Si viene de likes y se creó un match, mostrar el modal
+      if (widget.source == UserDetailSource.likes) {
+        _showMatchDialog(context, user?.name ?? 'Usuario');
+      } else {
+        Navigator.pop(context);
       }
-
-      Navigator.pop(context);
     } catch (e) {
       debugPrint('❌ Error on like/match: $e');
     }
@@ -523,6 +558,204 @@ class _UserDetailPageState extends State<UserDetailPage> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// Widget del Modal de Match estilo Tinder
+class MatchDialog extends StatefulWidget {
+  final String userName;
+
+  const MatchDialog({super.key, required this.userName});
+
+  @override
+  State<MatchDialog> createState() => _MatchDialogState();
+}
+
+class _MatchDialogState extends State<MatchDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _scaleAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.elasticOut,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeIn,
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFF6B6B),
+                  Color(0xFFFF8E8E),
+                  Color(0xFFFF6B6B),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF6B6B).withOpacity(0.5),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.favorite,
+                    color: Color(0xFFFF6B6B),
+                    size: 50,
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                // Texto "¡Es un Match!"
+                const Text(
+                  '¡Es un Match!',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                // Texto con el nombre del usuario
+                Text(
+                  'Tú y ${widget.userName} se gustan mutuamente',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Botones
+                Column(
+                  children: [
+                    // Botón "Enviar mensaje"
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          // Aquí puedes navegar a la página de chat
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFFFF6B6B),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: const Text(
+                            'Ahora podras ver su instagram en la pantalla de Matches',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Botón "Seguir descubriendo"
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            side: const BorderSide(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        child: const Text(
+                          'Seguir descubriendo',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

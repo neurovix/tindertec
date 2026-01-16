@@ -140,6 +140,22 @@ class _PasswordScreenState extends State<PasswordScreen> {
     return supabase.storage.from('images').getPublicUrl(path);
   }
 
+  Future<Map<String, dynamic>> resolveDegree(RegisterData data) async {
+    if (data.degree == 'Otra') {
+      final otraId = await fetchDegreeId('Otra');
+
+      return {
+        'id_degree': otraId,
+        'custom_degree': data.customDegree,
+      };
+    }
+
+    return {
+      'id_degree': await fetchDegreeId(data.degree!),
+      'custom_degree': null,
+    };
+  }
+
   // -------------------- REGISTER FLOW --------------------
 
   Future<void> handleSupabaseRegister(RegisterData data) async {
@@ -158,6 +174,11 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
       final userId = user.id;
 
+      final degreeData = await resolveDegree(data);
+
+      debugPrint('DEGREE: ${data.degree}');
+      debugPrint('CUSTOM DEGREE: ${data.customDegree}');
+
       await Supabase.instance.client.from('users').insert({
         'id_user': userId,
         'name': data.name,
@@ -166,7 +187,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
         'instagram_user': data.instagramUser,
         'profile_completed': true,
         'id_gender': getGender(data.gender!),
-        'id_degree': await fetchDegreeId(data.degree!),
+        'id_degree': degreeData['id_degree'],
+        'custom_degree': degreeData['custom_degree'],
         'id_looking_for': await fetchLookingFor(data.lookingFor!),
         'id_interest': getInterest(data.interest!),
       });
@@ -209,6 +231,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.toString())));
+        debugPrint("Error: $e");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

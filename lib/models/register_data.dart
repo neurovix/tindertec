@@ -9,6 +9,7 @@ class RegisterData {
   String? instagramUser;
   String? gender;
   String? degree;
+  String? customDegree;
   String? lookingFor;
   String? interest;
   List<String>? habits;
@@ -24,6 +25,7 @@ class RegisterData {
     this.lookingFor,
     this.interest,
     this.habits,
-    this.photos
+    this.photos,
+    this.customDegree
   });
 }

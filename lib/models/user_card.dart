@@ -20,7 +20,7 @@ class UserCard {
     this.instagramUser,
     this.gender,
     this.lookingFor,
-    this.habits = const [],  // Default to empty list
+    this.habits = const [],
   });
 
   factory UserCard.fromMap(Map<String, dynamic> map) {
@@ -30,15 +30,21 @@ class UserCard {
         <String>[];
 
     final genderName = map['genders']?['name'] as String?;
-    final degreeName = map['degrees']?['name'] as String?;
+    final rawDegreeName = map['degrees']?['name'] as String?;
+    final customDegree = map['custom_degree'] as String?;
     final lookingForName = map['looking_for']?['name'] as String?;
+
+    final String? degreeName =
+    (rawDegreeName == 'Otra' && customDegree != null && customDegree.isNotEmpty)
+        ? customDegree
+        : rawDegreeName;
 
     final habitsList = (map['user_has_life_habits'] as List?)
         ?.map((habit) => habit['life_habits']?['name'] as String?)
-        .whereType<String>()  // Filters out nulls, now Iterable<String>
+        .whereType<String>()
         .where((name) => name.isNotEmpty)
         .toList() ??
-        <String>[];  // Always List<String>
+        <String>[];
 
     return UserCard(
       id: map['id_user'] as String,
@@ -50,7 +56,7 @@ class UserCard {
       photos: photosList,
       gender: genderName,
       lookingFor: lookingForName,
-      habits: habitsList,  // Now matches List<String>
+      habits: habitsList,
     );
   }
 }

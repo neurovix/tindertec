@@ -10,10 +10,18 @@ class DegreeScreen extends StatefulWidget {
 
 class _DegreeScreenState extends State<DegreeScreen> {
   String? selectedDegree;
+  final TextEditingController _customDegreeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customDegreeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final RegisterData registerData = ModalRoute.of(context)!.settings.arguments as RegisterData;
+    final RegisterData registerData =
+        ModalRoute.of(context)!.settings.arguments as RegisterData;
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -22,14 +30,32 @@ class _DegreeScreenState extends State<DegreeScreen> {
         child: SizedBox(
           height: 50,
           child: ElevatedButton(
-            onPressed: selectedDegree == null
+            onPressed:
+                selectedDegree == null ||
+                    (selectedDegree == 'Otra' && _customDegreeController.text.trim().isEmpty)
                 ? null
                 : () {
+                    if (selectedDegree == 'Otra' &&
+                        _customDegreeController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Escribe el nombre de tu carrera'),
+                        ),
+                      );
+                      return;
+                    }
+
                     registerData.degree = selectedDegree;
+
+                    if (selectedDegree == 'Otra') {
+                      registerData.customDegree = _customDegreeController.text
+                          .trim();
+                    }
+
                     Navigator.pushNamed(
-                        context,
-                        '/interests',
-                        arguments: registerData,
+                      context,
+                      '/interests',
+                      arguments: registerData,
                     );
                   },
             style: ElevatedButton.styleFrom(
@@ -95,6 +121,24 @@ class _DegreeScreenState extends State<DegreeScreen> {
                 _degreeOption('Ingenieria Materiales'),
                 const SizedBox(height: 15),
                 _degreeOption('Ingenieria en Gestion Empresarial'),
+                const SizedBox(height: 15),
+                _degreeOption('Otra'),
+
+                if (selectedDegree == 'Otra') ...[
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _customDegreeController,
+                    onChanged: (_) {
+                      setState(() {});
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Escribe el nombre de tu carrera',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
