@@ -37,6 +37,33 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _showSwipeLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('😔 Likes agotados'),
+        content: const Text(
+          'Tus likes diarios se han acabado.\n\n'
+              'Vuélvete premium para likes ilimitados '
+              'o espera hasta mañana.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/premium_details');
+            },
+            child: const Text('Hazte Premium'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -124,6 +151,7 @@ class _HomePageState extends State<HomePage> {
     if (currentUser == null) return;
 
     try {
+      // ❌ evitar doble like
       final alreadyLiked = await client
           .from('user_likes')
           .select('id_like')
@@ -131,18 +159,36 @@ class _HomePageState extends State<HomePage> {
           .eq('id_user_to', likedUser.id)
           .maybeSingle();
 
-      // 🔥 CLAVE: verificar si el widget sigue montado
-      if (!mounted) return;
-
       if (alreadyLiked != null) {
-        _showAlreadyLikedDialog(context);
+        if (mounted) _showAlreadyLikedDialog(context);
         return;
       }
 
+      // 🔢 PRIMERO validar límite (ANTES de guardar)
+      if (!isPremium) {
+        final canSwipe = await client.rpc(
+          'check_and_add_swipe',
+          params: {
+            'p_user_id': currentUser.id,
+          },
+        );
+
+        final bool res = canSwipe == true;
+        debugPrint('RPC RESULT: $res');
+
+        if (canSwipe == false) {
+          _showSwipeLimitDialog();
+          if (mounted) _showSwipeLimitDialog();
+          return; // ⛔ NO guarda el like
+        }
+      }
+
+      // ❤️ AHORA SÍ guardar like
       await client.from('user_likes').insert({
         'id_user_from': currentUser.id,
         'id_user_to': likedUser.id,
       });
+
     } catch (e) {
       debugPrint('❌ Error on like: $e');
     }
@@ -150,11 +196,11 @@ class _HomePageState extends State<HomePage> {
 
   void _onDislike(UserCard user) {}
 
-  bool _onSwipe(
-    int previousIndex,
-    int? currentIndex,
-    CardSwiperDirection direction,
-  ) {
+  Future<bool> _onSwipe(
+      int previousIndex,
+      int? currentIndex,
+      CardSwiperDirection direction,
+      ) async {
     if (previousIndex < 0 || previousIndex >= _cards.length) {
       return false;
     }
@@ -162,7 +208,7 @@ class _HomePageState extends State<HomePage> {
     final swipedUser = _cards[previousIndex];
 
     if (direction == CardSwiperDirection.right) {
-      _onLike(swipedUser);
+      await _onLike(swipedUser); // ✅ el RPC decide si se puede
     } else if (direction == CardSwiperDirection.left) {
       _onDislike(swipedUser);
     }

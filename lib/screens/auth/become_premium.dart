@@ -149,7 +149,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
                               ],
                             ),
                           ),
-                          _buildBenefitRow('🔥 Swipes diarios', '50', 'Ilimitados', 0),
+                          _buildBenefitRow('🔥 Likes diarios', '30', 'Ilimitados', 0),
                           _buildDivider(),
                           _buildBenefitRow('💖 Ver a quién le gustas', '❌', '✅', 1),
                           _buildDivider(),

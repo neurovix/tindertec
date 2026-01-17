@@ -49,9 +49,11 @@ create table users (
 );
 
 create table user_swipes (
-  id_swipe bigint generated always as identity primary key,
-  id_user uuid not null references users(id_user),
-  swiped_at timestamp default now()
+  id uuid default gen_random_uuid() primary key,
+  id_user uuid references users(id_user),
+  swipe_count int default 0,
+  swipe_date date default current_date,
+  created_at timestamp default now()
 );
 
 create index idx_user_swipes_user_date
