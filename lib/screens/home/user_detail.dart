@@ -20,6 +20,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
   String? error;
   int currentPhotoIndex = 0;
   late PageController _pageController;
+  bool isPremium = false;
 
   bool get showInstagram {
     return widget.source == UserDetailSource.matches;
@@ -34,12 +35,38 @@ class _UserDetailPageState extends State<UserDetailPage> {
     super.initState();
     _pageController = PageController();
     fetchUserDetails();
+    _checkAuthAndLoad();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkPremium() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final res = await Supabase.instance.client
+        .from('users')
+        .select('is_premium')
+        .eq('id_user', user.id)
+        .single();
+
+    setState(() {
+      isPremium = res['is_premium'] ?? false;
+    });
+  }
+
+  Future<void> _checkAuthAndLoad() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      Navigator.pushReplacementNamed(context, '/welcome');
+      return;
+    }
+
+    await _checkPremium();
   }
 
   Future<void> fetchUserDetails() async {
@@ -222,7 +249,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
       barrierDismissible: false,
       builder: (context) => MatchDialog(userName: userName),
     ).then((_) {
-      // Cerrar la página de detalles después de cerrar el modal
       Navigator.pop(context);
     });
   }
@@ -243,6 +269,25 @@ class _UserDetailPageState extends State<UserDetailPage> {
       if (alreadyLiked != null) {
         _showAlreadyLikedDialog(context);
         return;
+      }
+
+      // 🔢 PRIMERO validar límite (ANTES de guardar)
+      if (!isPremium) {
+        final canSwipe = await client.rpc(
+          'check_and_add_swipe',
+          params: {
+            'p_user_id': currentUser.id,
+          },
+        );
+
+        final bool res = canSwipe == true;
+        debugPrint('RPC RESULT: $res');
+
+        if (canSwipe == false) {
+          _showSwipeLimitDialog();
+          if (mounted) _showSwipeLimitDialog();
+          return; // ⛔ NO guarda el like
+        }
       }
 
       // Insertar like
@@ -272,6 +317,33 @@ class _UserDetailPageState extends State<UserDetailPage> {
     } catch (e) {
       debugPrint('❌ Error on like/match: $e');
     }
+  }
+
+  void _showSwipeLimitDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('😔 Likes agotados'),
+        content: const Text(
+          'Tus likes diarios se han acabado.\n\n'
+              'Vuélvete premium para likes ilimitados '
+              'o espera hasta mañana.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/premium_details');
+            },
+            child: const Text('Hazte Premium'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

@@ -188,7 +188,6 @@ class _HomePageState extends State<HomePage> {
         'id_user_from': currentUser.id,
         'id_user_to': likedUser.id,
       });
-
     } catch (e) {
       debugPrint('❌ Error on like: $e');
     }
