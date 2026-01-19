@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/screens/auth/become_premium.dart';
 import 'package:tindertec/screens/auth/description.dart';
@@ -28,6 +29,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
+
+  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
+
+  await Stripe.instance.applySettings();
 
   await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
