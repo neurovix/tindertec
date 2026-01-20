@@ -43,6 +43,7 @@ dependencies:
   flutter_image_compress: ^2.4.0
   path_provider: ^2.1.5
   path: ^1.9.1
+  in_app_purchase: ^3.2.3
 
 dev_dependencies:
   flutter_test:

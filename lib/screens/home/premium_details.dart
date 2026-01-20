@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:tindertec/services/stripe_service.dart'; // Importa tu servicio de Stripe
+import 'package:tindertec/services/stripe_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:tindertec/services/in_app_purchase.dart';
 
 class PremiumDetailsScreen extends StatefulWidget {
   const PremiumDetailsScreen({super.key});
@@ -12,41 +14,146 @@ class PremiumDetailsScreen extends StatefulWidget {
 
 class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   bool _isProcessing = false;
+  InAppPurchaseService? _iapService;
+  bool _isLoadingIAP = true;
+  String? _productPrice;
 
-  // Función para manejar el pago con Stripe
+  @override
+  void initState() {
+    super.initState();
+    if (Platform.isIOS) {
+      _initializeIAP();
+    }
+  }
+
+  @override
+  void dispose() {
+    _iapService?.dispose();
+    super.dispose();
+  }
+
+  // Inicializar IAP para iOS
+  Future<void> _initializeIAP() async {
+    setState(() {
+      _isLoadingIAP = true;
+    });
+
+    _iapService = InAppPurchaseService(
+      onPurchaseCompleted: _handleIAPPurchaseCompleted,
+      onPurchaseError: _handleIAPPurchaseError,
+      onPurchasingStateChanged: (isPurchasing) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = isPurchasing;
+          });
+        }
+      },
+    );
+
+    await _iapService!.initialize();
+
+    // Obtener el precio del producto
+    if (_iapService!.premiumProduct != null) {
+      setState(() {
+        _productPrice = _iapService!.premiumProduct!.price;
+      });
+    }
+
+    setState(() {
+      _isLoadingIAP = false;
+    });
+  }
+
+  // Manejar compra completada de IAP
+  void _handleIAPPurchaseCompleted(PurchaseDetails purchase) {
+    debugPrint('Compra IAP completada: ${purchase.productID}');
+
+    // Aquí actualiza el estado premium del usuario en tu backend
+    // await updateUserPremiumStatus(purchase.verificationData.serverVerificationData);
+
+    _showSuccessDialog();
+  }
+
+  // Manejar error de IAP
+  void _handleIAPPurchaseError(String error) {
+    if (error.toLowerCase().contains('cancelad')) {
+      // No mostrar error si el usuario canceló
+      return;
+    }
+    _showErrorDialog(error);
+  }
+
+  // Función para manejar compra con IAP (iOS)
+  Future<void> _handleIAPPurchase() async {
+    if (_iapService == null || !_iapService!.isAvailable) {
+      _showErrorDialog('La tienda no está disponible en este momento');
+      return;
+    }
+
+    if (_iapService!.premiumProduct == null) {
+      _showErrorDialog('El producto Premium no está disponible');
+      return;
+    }
+
+    await _iapService!.buyPremiumSubscription();
+  }
+
+  // Restaurar compras (iOS)
+  Future<void> _restorePurchases() async {
+    if (_iapService == null) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      await _iapService!.restorePurchases();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compras restauradas exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('Error al restaurar compras');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  // Función para manejar el pago con Stripe (Android)
   Future<void> _handleStripePayment() async {
     setState(() {
       _isProcessing = true;
     });
 
     try {
-      // Procesar el pago - 60 MXN = 6000 centavos
       final success = await StripeService.processPayment(
-        amount: 6000, // $60 MXN en centavos
+        amount: 6000,
         currency: 'mxn',
         context: context,
-        userEmail: 'usuario@ejemplo.com', // Reemplaza con el email del usuario
+        userEmail: 'usuario@ejemplo.com',
       );
 
       if (success) {
-        // Pago exitoso
         if (!mounted) return;
-
         _showSuccessDialog();
-
-        // Aquí actualiza el estado premium del usuario en tu backend/base de datos
-        // await updateUserPremiumStatus();
       } else {
-        // Pago cancelado o fallido
         if (!mounted) return;
-
         _showErrorDialog('El pago fue cancelado o falló. Intenta nuevamente.');
       }
     } catch (e) {
       debugPrint('Error en el pago: $e');
-
       if (!mounted) return;
-
       _showErrorDialog('Ocurrió un error inesperado. Por favor, intenta nuevamente.');
     } finally {
       if (mounted) {
@@ -107,8 +214,8 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
             ),
             child: TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Cierra el diálogo
-                Navigator.of(context).pop(); // Regresa a la pantalla anterior
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
               },
               child: const Text(
                 'Continuar',
@@ -181,22 +288,39 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Back Button
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back, size: 24),
-                        ),
+                            child: IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.arrow_back, size: 24),
+                            ),
+                          ),
+                          // Botón de restaurar compras (solo iOS)
+                          if (Platform.isIOS)
+                            TextButton(
+                              onPressed: _isProcessing ? null : _restorePurchases,
+                              child: const Text(
+                                'Restaurar',
+                                style: TextStyle(
+                                  color: Colors.pinkAccent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 30),
                       Column(
@@ -350,40 +474,49 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                         ),
                         child: Column(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  '\$',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.pinkAccent,
-                                  ),
-                                ),
-                                const Text(
-                                  '60 MXN',
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.black87,
-                                    height: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Text(
-                                    ' / semestre',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade600,
+                            if (Platform.isIOS && _isLoadingIAP)
+                              const CircularProgressIndicator(
+                                color: Colors.pinkAccent,
+                              )
+                            else
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    Platform.isIOS && _productPrice != null
+                                        ? _productPrice!.substring(0, 1)
+                                        : '\$',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.pinkAccent,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
+                                  Text(
+                                    Platform.isIOS && _productPrice != null
+                                        ? _productPrice!.substring(1)
+                                        : '60 MXN',
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.black87,
+                                      height: 1,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      ' / semestre',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                           ],
                         ),
                       ),
@@ -412,21 +545,31 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             color: Colors.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
-                              onTap: () {
-                                // Lógica de In App Purchase aquí (para iOS)
-                              },
+                              onTap: (_isProcessing || _isLoadingIAP)
+                                  ? null
+                                  : _handleIAPPurchase,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(
-                                    Icons.credit_card,
-                                    color: Colors.white,
-                                    size: 28,
-                                  ),
-                                  SizedBox(width: 12),
+                                children: [
+                                  if (_isProcessing)
+                                    const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  else
+                                    const Icon(
+                                      Icons.credit_card,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  const SizedBox(width: 12),
                                   Text(
-                                    "Pagar",
-                                    style: TextStyle(
+                                    _isProcessing ? "Procesando..." : "Suscribirme",
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
                                       fontWeight: FontWeight.w800,
