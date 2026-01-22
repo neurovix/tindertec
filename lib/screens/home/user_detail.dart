@@ -121,7 +121,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
         child: Row(
           children: List.generate(
             user!.photos.length,
-                (index) => Expanded(
+            (index) => Expanded(
               child: Container(
                 height: 3,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -275,9 +275,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
       if (!isPremium) {
         final canSwipe = await client.rpc(
           'check_and_add_swipe',
-          params: {
-            'p_user_id': currentUser.id,
-          },
+          params: {'p_user_id': currentUser.id},
         );
 
         final bool res = canSwipe == true;
@@ -291,21 +289,15 @@ class _UserDetailPageState extends State<UserDetailPage> {
       }
 
       // Insertar like
-      await client.from('user_likes').upsert(
-        {
-          'id_user_from': currentUser.id,
-          'id_user_to': likedUserId,
-        },
-        onConflict: 'id_user_from,id_user_to',
-      );
+      await client.from('user_likes').upsert({
+        'id_user_from': currentUser.id,
+        'id_user_to': likedUserId,
+      }, onConflict: 'id_user_from,id_user_to');
 
       // Intentar crear match vía RPC
       final result = await client.rpc(
         'create_match_if_mutual_like',
-        params: {
-          'p_user_a': currentUser.id,
-          'p_user_b': likedUserId,
-        },
+        params: {'p_user_a': currentUser.id, 'p_user_b': likedUserId},
       );
 
       // Si viene de likes y se creó un match, mostrar el modal
@@ -326,8 +318,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
         title: const Text('😔 Likes agotados'),
         content: const Text(
           'Tus likes diarios se han acabado.\n\n'
-              'Vuélvete premium para likes ilimitados '
-              'o espera hasta mañana.',
+          'Vuélvete premium para likes ilimitados '
+          'o espera hasta mañana.',
         ),
         actions: [
           TextButton(
@@ -407,48 +399,49 @@ class _UserDetailPageState extends State<UserDetailPage> {
                     children: [
                       user!.photos.isNotEmpty
                           ? PageView.builder(
-                        controller: _pageController,
-                        itemCount: user!.photos.length,
-                        onPageChanged: (index) {
-                          setState(() => currentPhotoIndex = index);
-                        },
-                        itemBuilder: (context, index) {
-                          return Image.network(
-                            user!.photos[index],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            loadingBuilder:
-                                (context, child, loadingProgress) {
-                              if (loadingProgress == null)
-                                return child;
-                              return const Center(
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFFF6B6B),
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.person,
-                                  size: 100,
-                                  color: Colors.grey,
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      )
+                              controller: _pageController,
+                              itemCount: user!.photos.length,
+                              onPageChanged: (index) {
+                                setState(() => currentPhotoIndex = index);
+                              },
+                              itemBuilder: (context, index) {
+                                return Image.network(
+                                  user!.photos[index],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+                                        return const Center(
+                                          child: CircularProgressIndicator(
+                                            color: Color(0xFFFF6B6B),
+                                          ),
+                                        );
+                                      },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                        Icons.person,
+                                        size: 100,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            )
                           : Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.person,
-                          size: 100,
-                          color: Colors.grey,
-                        ),
-                      ),
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.person,
+                                size: 100,
+                                color: Colors.grey,
+                              ),
+                            ),
                       IgnorePointer(
                         child: Container(
                           decoration: BoxDecoration(
@@ -664,10 +657,7 @@ class _MatchDialogState extends State<MatchDialog>
       curve: Curves.elasticOut,
     );
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeIn,
-    );
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
 
     _controller.forward();
   }

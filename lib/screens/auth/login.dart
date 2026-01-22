@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tindertec/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -35,7 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Correo o contraseña incorrectos. Asegurate de tener una cuenta registrada o crea una")),
+          SnackBar(
+            content: Text(
+              "Correo o contraseña incorrectos. Asegurate de tener una cuenta registrada o crea una",
+            ),
+          ),
         );
       }
     }
@@ -151,10 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const Text(
                     '¿No tienes una cuenta aún?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                   GestureDetector(
                     onTap: () {

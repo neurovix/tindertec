@@ -8,6 +8,7 @@ class TextWelcomeScreen extends StatefulWidget {
 }
 
 class _TextWelcomeScreen extends State<TextWelcomeScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -20,9 +21,7 @@ class _TextWelcomeScreen extends State<TextWelcomeScreen> {
             onPressed: () {
               Navigator.pushNamed(context, '/name');
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
             child: const Text(
               'Siguiente',
               style: TextStyle(
@@ -45,10 +44,7 @@ class _TextWelcomeScreen extends State<TextWelcomeScreen> {
                 onTap: () {
                   Navigator.pop(context);
                 },
-                child: Image.asset(
-                  'assets/icons/back_arrow.png',
-                  height: 40,
-                ),
+                child: Image.asset('assets/icons/back_arrow.png', height: 40),
               ),
 
               const SizedBox(height: 30),
@@ -57,10 +53,7 @@ class _TextWelcomeScreen extends State<TextWelcomeScreen> {
                 child: Text(
                   'Te damos la bienvenida a TINDERTEC',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
 
@@ -68,85 +61,63 @@ class _TextWelcomeScreen extends State<TextWelcomeScreen> {
 
               const Text(
                 'Por favor, sigue estas normas',
-                style: TextStyle(
-                  fontSize: 12,
-                ),
+                style: TextStyle(fontSize: 12),
               ),
 
               const SizedBox(height: 20),
 
               const Text(
                 'No finjas ser alguien mas',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
 
               const SizedBox(height: 10),
 
               const Text(
                 'Asegurate de que tus fotos, edad y biografia correspondan con quien eres actualmente.',
-                style: TextStyle(
-                  fontSize: 13,
-                ),
+                style: TextStyle(fontSize: 13),
               ),
 
               const SizedBox(height: 20),
 
               const Text(
                 'Cuidate',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
 
               const SizedBox(height: 10),
 
               const Text(
                 'No des tu informacion personal demasiado pronto.',
-                style: TextStyle(
-                  fontSize: 13,
-                ),
+                style: TextStyle(fontSize: 13),
               ),
 
               const SizedBox(height: 20),
 
               const Text(
                 'Tomalo con calma',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
 
               const SizedBox(height: 10),
 
               const Text(
                 'Respeta a las demas personas y tratalas como te gustaria que te trataran.',
-                style: TextStyle(
-                  fontSize: 13,
-                ),
+                style: TextStyle(fontSize: 13),
               ),
 
               const SizedBox(height: 20),
 
               const Text(
                 'Toma la iniciativa',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
 
               const SizedBox(height: 10),
 
               const Text(
                 'Siempre denuncia el mal comportamiento.',
-                style: TextStyle(
-                  fontSize: 13,
-                ),
+                style: TextStyle(fontSize: 13),
               ),
             ],
           ),

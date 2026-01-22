@@ -44,6 +44,7 @@ dependencies:
   path_provider: ^2.1.5
   path: ^1.9.1
   in_app_purchase: ^3.2.3
+  in_app_purchase_storekit: ^0.4.7
 
 dev_dependencies:
   flutter_test:

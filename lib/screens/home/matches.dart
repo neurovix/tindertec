@@ -36,9 +36,7 @@ class _MatchesPageState extends State<MatchesPage> {
             user_photos!left(url, is_main)
           )
         ''')
-          .or(
-        'id_user_1.eq.${currentUser.id},id_user_2.eq.${currentUser.id}',
-      )
+          .or('id_user_1.eq.${currentUser.id},id_user_2.eq.${currentUser.id}')
           .order('matched_at', ascending: false);
 
       final List<Map<String, dynamic>> matchesList = [];
@@ -51,7 +49,7 @@ class _MatchesPageState extends State<MatchesPage> {
 
         final photos = (otherUser['user_photos'] as List<dynamic>? ?? []);
         final mainPhoto = photos.firstWhere(
-              (p) => p['is_main'] == true,
+          (p) => p['is_main'] == true,
           orElse: () => photos.isNotEmpty ? photos.first : null,
         );
 
@@ -159,8 +157,9 @@ class _MatchesPageState extends State<MatchesPage> {
                                                 child,
                                                 loadingProgress,
                                               ) {
-                                                if (loadingProgress == null)
+                                                if (loadingProgress == null) {
                                                   return child;
+                                                }
                                                 return const Center(
                                                   child:
                                                       CircularProgressIndicator(),

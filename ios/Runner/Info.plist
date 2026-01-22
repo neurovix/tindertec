@@ -22,6 +22,12 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>NSCameraUsageDescription</key>
+    <string>TinderTec necesita acceso a la cámara para que los usuarios puedan subir fotos a su perfil.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>TinderTec necesita acceso a la galería para que los usuarios puedan seleccionar fotos para su perfil.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>TinderTec necesita guardar imágenes seleccionadas por el usuario.</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>

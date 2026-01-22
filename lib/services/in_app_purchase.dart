@@ -40,39 +40,35 @@ class InAppPurchaseService {
 
   /// Inicializar el servicio de compras
   Future<void> initialize() async {
-    // Verificar disponibilidad
     _isAvailable = await _inAppPurchase.isAvailable();
 
     if (!_isAvailable) {
       debugPrint('La tienda no está disponible');
-      onPurchaseError?.call('La tienda no está disponible en este momento');
+      onPurchaseError?.call('La tienda no está disponible');
       return;
     }
 
-    // Configurar el listener de compras
-    final Stream<List<PurchaseDetails>> purchaseUpdated =
-        _inAppPurchase.purchaseStream;
+    // ✅ PRIMERO configurar StoreKit (ANTES de TODO)
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final iosAddition =
+      _inAppPurchase.getPlatformAddition<InAppPurchaseStoreKitPlatformAddition>();
 
-    _subscription = purchaseUpdated.listen(
+      await iosAddition.setDelegate(PaymentQueueDelegate());
+    }
+
+    // Listener
+    _subscription = _inAppPurchase.purchaseStream.listen(
       _onPurchaseUpdate,
       onDone: () => _subscription.cancel(),
       onError: (error) {
-        debugPrint('Error en el stream de compras: $error');
+        debugPrint('Error en stream: $error');
         _updatePurchasingState(false);
         onPurchaseError?.call(error.toString());
       },
     );
 
-    // Cargar productos
+    // ✅ AHORA sí cargar productos
     await loadProducts();
-
-    // Configurar delegate para iOS
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      final InAppPurchaseStoreKitPlatformAddition iosAddition =
-      _inAppPurchase.getPlatformAddition<InAppPurchaseStoreKitPlatformAddition>();
-
-      await iosAddition.setDelegate(PaymentQueueDelegate());
-    }
   }
 
   /// Cargar productos desde la tienda
@@ -123,8 +119,9 @@ class InAppPurchaseService {
 
     try {
       // Para suscripciones, usa buyNonConsumable
-      final bool success = await _inAppPurchase.buyNonConsumable(
+      final bool success = await _inAppPurchase.buyConsumable(
         purchaseParam: purchaseParam,
+        autoConsume: false,
       );
 
       if (!success) {

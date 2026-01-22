@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:tindertec/services/stripe_service.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:tindertec/services/in_app_purchase.dart';
@@ -154,7 +153,9 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     } catch (e) {
       debugPrint('Error en el pago: $e');
       if (!mounted) return;
-      _showErrorDialog('Ocurrió un error inesperado. Por favor, intenta nuevamente.');
+      _showErrorDialog(
+        'Ocurrió un error inesperado. Por favor, intenta nuevamente.',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -169,9 +170,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Column(
           children: [
             Container(
@@ -182,19 +181,12 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.check,
-                size: 50,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.check, size: 50, color: Colors.white),
             ),
             const SizedBox(height: 16),
             const Text(
               '¡Pago Exitoso!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -236,9 +228,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
             Icon(Icons.error_outline, color: Colors.red, size: 30),
@@ -271,11 +261,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.pink.shade50,
-              Colors.white,
-              Colors.purple.shade50,
-            ],
+            colors: [Colors.pink.shade50, Colors.white, Colors.purple.shade50],
           ),
         ),
         child: SafeArea(
@@ -311,7 +297,9 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                           // Botón de restaurar compras (solo iOS)
                           if (Platform.isIOS)
                             TextButton(
-                              onPressed: _isProcessing ? null : _restorePurchases,
+                              onPressed: _isProcessing
+                                  ? null
+                                  : _restorePurchases,
                               child: const Text(
                                 'Restaurar',
                                 style: TextStyle(
@@ -330,7 +318,10 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Colors.pinkAccent, Colors.purpleAccent],
+                                  colors: [
+                                    Colors.pinkAccent,
+                                    Colors.purpleAccent,
+                                  ],
                                 ),
                                 shape: BoxShape.circle,
                                 boxShadow: [
@@ -445,15 +436,35 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                                   ],
                                 ),
                               ),
-                              _buildBenefitRow('🔥 Likes diarios', '30', 'Ilimitados', 0),
+                              _buildBenefitRow(
+                                '🔥 Likes diarios',
+                                '30',
+                                'Ilimitados',
+                                0,
+                              ),
                               _buildDivider(),
-                              _buildBenefitRow('💖 Ver a quién le gustas', '❌', '✅', 1),
+                              _buildBenefitRow(
+                                '💖 Ver a quién le gustas',
+                                '❌',
+                                '✅',
+                                1,
+                              ),
                               _buildDivider(),
-                              _buildBenefitRow('⏮️ Retroceder perfiles', '❌', '✅', 3),
+                              _buildBenefitRow(
+                                '⏮️ Retroceder perfiles',
+                                '❌',
+                                '✅',
+                                3,
+                              ),
                               _buildDivider(),
                               _buildBenefitRow('✍️ Editar perfil', '❌', '✅', 4),
                               _buildDivider(),
-                              _buildBenefitRow('🙈 Alerta de match', '❌', '✅', 5),
+                              _buildBenefitRow(
+                                '🙈 Alerta de match',
+                                '❌',
+                                '✅',
+                                5,
+                              ),
                             ],
                           ),
                         ),
@@ -568,7 +579,9 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                                     ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    _isProcessing ? "Procesando..." : "Suscribirme",
+                                    _isProcessing
+                                        ? "Procesando..."
+                                        : "Suscribirme",
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -604,7 +617,9 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             color: Colors.transparent,
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
-                              onTap: _isProcessing ? null : _handleStripePayment,
+                              onTap: _isProcessing
+                                  ? null
+                                  : _handleStripePayment,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -625,7 +640,9 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                                     ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    _isProcessing ? "Procesando..." : "Pagar con Stripe",
+                                    _isProcessing
+                                        ? "Procesando..."
+                                        : "Pagar con Stripe",
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -664,9 +681,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                       child: const Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(
-                            color: Colors.pinkAccent,
-                          ),
+                          CircularProgressIndicator(color: Colors.pinkAccent),
                           SizedBox(height: 16),
                           Text(
                             'Procesando pago...',
@@ -688,11 +703,11 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   }
 
   Widget _buildBenefitRow(
-      String benefit,
-      String normal,
-      String premium,
-      int index,
-      ) {
+    String benefit,
+    String normal,
+    String premium,
+    int index,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
@@ -701,10 +716,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
             flex: 2,
             child: Text(
               benefit,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
@@ -712,10 +724,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
             child: Center(
               child: Text(
                 normal,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
               ),
             ),
           ),

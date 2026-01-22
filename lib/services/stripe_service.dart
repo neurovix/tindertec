@@ -4,13 +4,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 
-enum ApiServiceMethodType {
-  get,
-  post,
-}
+enum ApiServiceMethodType { get, post }
 
 class StripeService {
-  static String _stripeSecretKey = dotenv.env['STRIPE_SECRET_KEY']!;
+  static final String _stripeSecretKey = dotenv.env['STRIPE_SECRET_KEY']!;
   static const baseUrl = 'https://api.stripe.com/v1';
 
   static Map<String, String> get requestHeaders => {
@@ -24,9 +21,7 @@ class StripeService {
       final response = await apiService(
         endpoint: 'customers',
         requestMethod: ApiServiceMethodType.post,
-        requestBody: {
-          'email': email,
-        },
+        requestBody: {'email': email},
       );
       return response;
     } catch (e) {
@@ -42,10 +37,7 @@ class StripeService {
     String? customerId,
   }) async {
     try {
-      final body = {
-        'amount': amount.toString(),
-        'currency': currency,
-      };
+      final body = {'amount': amount.toString(), 'currency': currency};
 
       if (customerId != null) {
         body['customer'] = customerId;
@@ -65,10 +57,10 @@ class StripeService {
 
   // Crear una suscripción
   static Future<Map<String, dynamic>?> createSubscription(
-      String customerId,
-      String priceId,
-      String paymentMethodId,
-      ) async {
+    String customerId,
+    String priceId,
+    String paymentMethodId,
+  ) async {
     try {
       final response = await apiService(
         endpoint: 'subscriptions',
@@ -154,10 +146,13 @@ class StripeService {
         );
       }
 
-      if (requestResponse.statusCode == 200 || requestResponse.statusCode == 201) {
+      if (requestResponse.statusCode == 200 ||
+          requestResponse.statusCode == 201) {
         return json.decode(requestResponse.body);
       } else {
-        debugPrint('API Error: ${requestResponse.statusCode} - ${requestResponse.body}');
+        debugPrint(
+          'API Error: ${requestResponse.statusCode} - ${requestResponse.body}',
+        );
         return null;
       }
     } catch (err) {
