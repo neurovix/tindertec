@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'package:tindertec/services/stripe_service.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -51,6 +52,8 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
 
     await _iapService!.initialize();
 
+    await _iapService!.testProductConnection();
+
     // Obtener el precio del producto
     if (_iapService!.premiumProduct != null) {
       setState(() {
@@ -64,11 +67,32 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   }
 
   // Manejar compra completada de IAP
-  void _handleIAPPurchaseCompleted(PurchaseDetails purchase) {
+  void _handleIAPPurchaseCompleted(PurchaseDetails purchase) async {
     debugPrint('Compra IAP completada: ${purchase.productID}');
 
     // Aquí actualiza el estado premium del usuario en tu backend
-    // await updateUserPremiumStatus(purchase.verificationData.serverVerificationData);
+    final user = Supabase.instance.client.auth.currentUser;
+    final String? userId = user?.id;
+
+    if (userId == null || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('No se pudo encontrar una sesion activa')),
+      );
+    }
+
+    try {
+      final _ = await Supabase.instance.client
+          .from("users")
+          .update({'is_premium': true})
+          .eq('id_user', userId.toString());
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo actualizar a premium.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
 
     _showSuccessDialog();
   }
@@ -131,6 +155,34 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
 
   // Función para manejar el pago con Stripe (Android)
   Future<void> _handleStripePayment() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final String? userId = user?.id;
+    final String? userEmail = user?.email;
+
+    // 🔴 Validación de email
+    if (userEmail == null || userEmail.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo obtener el correo del usuario.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 🔴 Validación de id
+    if (userId == null || userId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo obtener el correo del usuario.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isProcessing = true;
     });
@@ -140,11 +192,26 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
         amount: 6000,
         currency: 'mxn',
         context: context,
-        userEmail: 'usuario@ejemplo.com',
+        userEmail: userEmail,
       );
 
       if (success) {
         if (!mounted) return;
+
+        try {
+          final _ = await Supabase.instance.client
+              .from("users")
+              .update({'is_premium': true})
+              .eq('id_user', userId);
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo actualizar a premium.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+
         _showSuccessDialog();
       } else {
         if (!mounted) return;

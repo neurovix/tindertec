@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
+import 'package:tindertec/services/stripe_service.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:tindertec/services/in_app_purchase.dart';
 
 class BecomePremiumScreen extends StatefulWidget {
   const BecomePremiumScreen({super.key});
@@ -8,6 +13,313 @@ class BecomePremiumScreen extends StatefulWidget {
 }
 
 class _BecomePremiumState extends State<BecomePremiumScreen> {
+  bool _isProcessing = false;
+  InAppPurchaseService? _iapService;
+  bool _isLoadingIAP = true;
+  String? _productPrice;
+
+  @override
+  void initState() {
+    super.initState();
+    if (Platform.isIOS) {
+      _initializeIAP();
+    }
+  }
+
+  @override
+  void dispose() {
+    _iapService?.dispose();
+    super.dispose();
+  }
+
+  // Inicializar IAP para iOS
+  Future<void> _initializeIAP() async {
+    setState(() {
+      _isLoadingIAP = true;
+    });
+
+    _iapService = InAppPurchaseService(
+      onPurchaseCompleted: _handleIAPPurchaseCompleted,
+      onPurchaseError: _handleIAPPurchaseError,
+      onPurchasingStateChanged: (isPurchasing) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = isPurchasing;
+          });
+        }
+      },
+    );
+
+    await _iapService!.initialize();
+
+    await _iapService!.testProductConnection();
+
+    // Obtener el precio del producto
+    if (_iapService!.premiumProduct != null) {
+      setState(() {
+        _productPrice = _iapService!.premiumProduct!.price;
+      });
+    }
+
+    setState(() {
+      _isLoadingIAP = false;
+    });
+  }
+
+  // Manejar compra completada de IAP
+  void _handleIAPPurchaseCompleted(PurchaseDetails purchase) async {
+    debugPrint('Compra IAP completada: ${purchase.productID}');
+
+    // Aquí actualiza el estado premium del usuario en tu backend
+    final user = Supabase.instance.client.auth.currentUser;
+    final String? userId = user?.id;
+
+    if (userId == null || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('No se pudo encontrar una sesion activa')),
+      );
+    }
+
+    try {
+      final _ = await Supabase.instance.client
+          .from("users")
+          .update({'is_premium': true})
+          .eq('id_user', userId.toString());
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo actualizar a premium.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+
+    _showSuccessDialog();
+  }
+
+  // Manejar error de IAP
+  void _handleIAPPurchaseError(String error) {
+    if (error.toLowerCase().contains('cancelad')) {
+      // No mostrar error si el usuario canceló
+      return;
+    }
+    _showErrorDialog(error);
+  }
+
+  // Función para manejar compra con IAP (iOS)
+  Future<void> _handleIAPPurchase() async {
+    if (_iapService == null || !_iapService!.isAvailable) {
+      _showErrorDialog('La tienda no está disponible en este momento');
+      return;
+    }
+
+    if (_iapService!.premiumProduct == null) {
+      _showErrorDialog('El producto Premium no está disponible');
+      return;
+    }
+
+    await _iapService!.buyPremiumSubscription();
+  }
+
+  // Restaurar compras (iOS)
+  Future<void> _restorePurchases() async {
+    if (_iapService == null) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      await _iapService!.restorePurchases();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Compras restauradas exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog('Error al restaurar compras');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  // Función para manejar el pago con Stripe (Android)
+  Future<void> _handleStripePayment() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    final String? userId = user?.id;
+    final String? userEmail = user?.email;
+
+    // 🔴 Validación de email
+    if (userEmail == null || userEmail.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo obtener el correo del usuario.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 🔴 Validación de id
+    if (userId == null || userId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo obtener el correo del usuario.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final success = await StripeService.processPayment(
+        amount: 6000,
+        currency: 'mxn',
+        context: context,
+        userEmail: userEmail,
+      );
+
+      if (success) {
+        if (!mounted) return;
+
+        try {
+          final _ = await Supabase.instance.client
+              .from("users")
+              .update({'is_premium': true})
+              .eq('id_user', userId);
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo actualizar a premium.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+
+        _showSuccessDialog();
+      } else {
+        if (!mounted) return;
+        _showErrorDialog('El pago fue cancelado o falló. Intenta nuevamente.');
+      }
+    } catch (e) {
+      debugPrint('Error en el pago: $e');
+      if (!mounted) return;
+      _showErrorDialog(
+        'Ocurrió un error inesperado. Por favor, intenta nuevamente.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.pinkAccent, Colors.purpleAccent],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, size: 50, color: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '¡Pago Exitoso!',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Ahora eres usuario Premium. ¡Disfruta de todos los beneficios!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.pinkAccent, Colors.purpleAccent],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Continuar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red, size: 30),
+            SizedBox(width: 12),
+            Text('Error'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Entendido',
+              style: TextStyle(
+                color: Colors.pinkAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,54 +528,129 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        colors: [Colors.pinkAccent, Colors.purpleAccent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.pinkAccent.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
+                  // Botón condicional basado en la plataforma
+                  if (Platform.isIOS)
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          // In App Purchase Logic Here
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.credit_card,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              "Pagar",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
+                        gradient: const LinearGradient(
+                          colors: [Colors.pinkAccent, Colors.purpleAccent],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.pinkAccent.withOpacity(0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: (_isProcessing || _isLoadingIAP)
+                              ? null
+                              : _handleIAPPurchase,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (_isProcessing)
+                                const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.credit_card,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              const SizedBox(width: 12),
+                              Text(
+                                _isProcessing
+                                    ? "Procesando..."
+                                    : "Suscribirme",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (Platform.isAndroid)
+                    Container(
+                      width: double.infinity,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: const LinearGradient(
+                          colors: [Colors.pinkAccent, Colors.purpleAccent],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.pinkAccent.withOpacity(0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: _isProcessing
+                              ? null
+                              : _handleStripePayment,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (_isProcessing)
+                                const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              else
+                                const Icon(
+                                  Icons.credit_card,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              const SizedBox(width: 12),
+                              Text(
+                                _isProcessing
+                                    ? "Procesando..."
+                                    : "Pagar con Stripe",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 20),
                   Container(
                     width: double.infinity,
