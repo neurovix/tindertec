@@ -16,9 +16,20 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   bool _isProcessing = false;
   InAppPurchaseService? _iapService;
   bool _isLoadingIAP = true;
-  String? _productPrice;
-  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
-  List<ProductDetails> _products = [];
+
+  // Mapa de precios para iOS (se actualizan desde IAP)
+  Map<String, String> _iosPrices = {
+    InAppPurchaseService.weeklyProductId: 'Cargando...',
+    InAppPurchaseService.monthlyProductId: 'Cargando...',
+    InAppPurchaseService.semiannualProductId: 'Cargando...',
+  };
+
+  // Precios fijos para Android
+  static const Map<String, String> _androidPrices = {
+    'Semanal': '20 MXN',
+    'Mensual': '50 MXN',
+    'Semestral': '100 MXN',
+  };
 
   @override
   void initState() {
@@ -26,25 +37,6 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     if (Platform.isIOS) {
       _initializeIAP();
     }
-  }
-
-  Future<void> _loadProducts() async {
-    const ids = {
-      'tindertec_weekly',
-      'tindertec_monthly',
-      'tindertec_semiannual',
-    };
-
-    final response = await _inAppPurchase.queryProductDetails(ids);
-
-    if (response.error != null || response.productDetails.isEmpty) {
-      debugPrint('Error cargando productos IAP');
-      return;
-    }
-
-    setState(() {
-      _products = response.productDetails;
-    });
   }
 
   @override
@@ -69,71 +61,111 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
           });
         }
       },
+      onProductsLoaded: () {
+        // Actualizar precios cuando los productos se cargan
+        if (mounted) {
+          _updateIOSPrices();
+        }
+      },
     );
 
     await _iapService!.initialize();
-
-    await _iapService!.testProductConnection();
-
-    // Obtener el precio del producto
-    if (_iapService!.premiumProduct != null) {
-      setState(() {
-        _productPrice = _iapService!.premiumProduct!.price;
-      });
-    }
 
     setState(() {
       _isLoadingIAP = false;
     });
   }
 
+  // Actualizar precios de iOS desde los productos cargados
+  void _updateIOSPrices() {
+    if (_iapService == null) return;
+
+    setState(() {
+      for (var product in _iapService!.products) {
+        _iosPrices[product.id] = product.price;
+      }
+    });
+
+    debugPrint('✅ Precios actualizados: $_iosPrices');
+  }
+
+  // Obtener precio según plataforma
+  String _getPrice(String productId, String planName) {
+    if (Platform.isIOS) {
+      return _iosPrices[productId] ?? 'N/A';
+    } else {
+      return _androidPrices[planName] ?? 'N/A';
+    }
+  }
+
   // Manejar compra completada de IAP
   void _handleIAPPurchaseCompleted(PurchaseDetails purchase) async {
-    debugPrint('Compra IAP completada: ${purchase.productID}');
+    debugPrint('✅ Compra IAP completada: ${purchase.productID}');
 
-    // Aquí actualiza el estado premium del usuario en tu backend
     final user = Supabase.instance.client.auth.currentUser;
     final String? userId = user?.id;
 
     if (userId == null || userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('No se pudo encontrar una sesion activa')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo encontrar una sesión activa'),
+          ),
+        );
+      }
+      return;
     }
 
     try {
-      final _ = await Supabase.instance.client
+      await Supabase.instance.client
           .from("users")
           .update({'is_premium': true})
-          .eq('id_user', userId.toString());
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo actualizar a premium.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+          .eq('id_user', userId);
 
-    _showSuccessDialog();
+      if (mounted) {
+        _showSuccessDialog();
+      }
+    } catch (e) {
+      debugPrint('❌ Error al actualizar usuario: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo actualizar a premium.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Manejar error de IAP
   void _handleIAPPurchaseError(String error) {
+    // No mostrar ningún mensaje si el usuario canceló
     if (error.toLowerCase().contains('cancelad')) {
-      // No mostrar error si el usuario canceló
+      debugPrint('ℹ️ Usuario canceló la compra (no se muestra error)');
       return;
     }
-    _showErrorDialog(error);
+
+    // No mostrar error para timeout si no hay otra acción del usuario
+    if (error.toLowerCase().contains('demasiado tiempo')) {
+      debugPrint('⏰ Timeout de compra');
+      return;
+    }
+
+    // Solo mostrar errores reales
+    if (mounted) {
+      _showErrorDialog(error);
+    }
   }
 
   // Función para manejar compra con IAP (iOS)
   Future<void> _handleIAPPurchase(String productId) async {
-    final product = _products.firstWhere((p) => p.id == productId);
+    if (_iapService == null) {
+      _showErrorDialog('Servicio de compras no disponible');
+      return;
+    }
 
-    final purchaseParam = PurchaseParam(productDetails: product);
-
-    await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+    await _iapService!.buySubscription(productId);
   }
 
   // Restaurar compras (iOS)
@@ -173,7 +205,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
       case 'Semanal':
         return 2000;
       case 'Mensual':
-        return 6000;
+        return 5000;
       default:
         return 10000;
     }
@@ -185,7 +217,6 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     final String? userId = user?.id;
     final String? userEmail = user?.email;
 
-    // 🔴 Validación de email
     if (userEmail == null || userEmail.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -197,7 +228,6 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
       return;
     }
 
-    // 🔴 Validación de id
     if (userId == null || userId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -225,10 +255,12 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
         if (!mounted) return;
 
         try {
-          final _ = await Supabase.instance.client
+          await Supabase.instance.client
               .from("users")
               .update({'is_premium': true})
               .eq('id_user', userId);
+
+          _showSuccessDialog();
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -237,14 +269,12 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
             ),
           );
         }
-
-        _showSuccessDialog();
       } else {
         if (!mounted) return;
         _showErrorDialog('El pago fue cancelado o falló. Intenta nuevamente.');
       }
     } catch (e) {
-      debugPrint('Error en el pago: $e');
+      debugPrint('❌ Error en el pago: $e');
       if (!mounted) return;
       _showErrorDialog(
         'Ocurrió un error inesperado. Por favor, intenta nuevamente.',
@@ -268,8 +298,8 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   colors: [Colors.pinkAccent, Colors.purpleAccent],
                 ),
                 shape: BoxShape.circle,
@@ -489,8 +519,8 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                                     ],
                                   ),
                                 ),
-                                child: Row(
-                                  children: const [
+                                child: const Row(
+                                  children: [
                                     Expanded(
                                       flex: 2,
                                       child: Text(
@@ -544,13 +574,13 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                               ),
                               _buildDivider(),
                               _buildBenefitRow(
-                                '⏮️ Retroceder perfiles',
+                                '⮐️ Retroceder perfiles',
                                 '❌',
                                 '✅',
                                 3,
                               ),
                               _buildDivider(),
-                              _buildBenefitRow('✍️ Editar perfil', '❌', '✅', 4),
+                              _buildBenefitRow('✏️ Editar perfil', '❌', '✅', 4),
                               _buildDivider(),
                               _buildBenefitRow(
                                 '🙈 Alerta de match',
@@ -586,8 +616,11 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Semanal',
-                                price: '20 MXN',
-                                productId: 'tindertec_premium_weekly',
+                                price: _getPrice(
+                                  InAppPurchaseService.weeklyProductId,
+                                  'Semanal',
+                                ),
+                                productId: InAppPurchaseService.weeklyProductId,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -595,8 +628,12 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Mensual',
-                                price: '50 MXN',
-                                productId: 'tindertec_premium_monthly',
+                                price: _getPrice(
+                                  InAppPurchaseService.monthlyProductId,
+                                  'Mensual',
+                                ),
+                                productId:
+                                    InAppPurchaseService.monthlyProductId,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -604,8 +641,12 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Semestral',
-                                price: '100 MXN',
-                                productId: 'tindertec_premium_semesterly',
+                                price: _getPrice(
+                                  InAppPurchaseService.semiannualProductId,
+                                  'Semestral',
+                                ),
+                                productId:
+                                    InAppPurchaseService.semiannualProductId,
                               ),
                             ),
                           ],
@@ -617,7 +658,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                 ),
               ),
               // Overlay de procesamiento
-              if (_isProcessing)
+              if (_isProcessing || (Platform.isIOS && _isLoadingIAP))
                 Container(
                   color: Colors.black.withOpacity(0.3),
                   child: Center(
@@ -634,14 +675,18 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                           ),
                         ],
                       ),
-                      child: const Column(
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(color: Colors.pinkAccent),
-                          SizedBox(height: 16),
+                          const CircularProgressIndicator(
+                            color: Colors.pinkAccent,
+                          ),
+                          const SizedBox(height: 16),
                           Text(
-                            'Procesando pago...',
-                            style: TextStyle(
+                            _isLoadingIAP
+                                ? 'Cargando productos...'
+                                : 'Procesando pago...',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -744,124 +789,71 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 16),
-        if (Platform.isIOS)
-          Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
+        Container(
+          width: double.infinity,
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Colors.pinkAccent, Colors.purpleAccent],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.pinkAccent.withOpacity(0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                colors: [Colors.pinkAccent, Colors.purpleAccent],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.pinkAccent.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: (_isProcessing || _isLoadingIAP)
-                    ? null
-                    : () => _handleIAPPurchase(productId),
-                child: Center(
-                  child: _isProcessing
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.credit_card,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              "Suscribirme",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+              onTap: (_isProcessing || (Platform.isIOS && _isLoadingIAP))
+                  ? null
+                  : () {
+                      if (Platform.isIOS) {
+                        _handleIAPPurchase(productId);
+                      } else {
+                        _handleStripePayment(title);
+                      }
+                    },
+              child: Center(
+                child: _isProcessing
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
                         ),
-                ),
-              ),
-            ),
-          )
-        else if (Platform.isAndroid)
-          Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                colors: [Colors.pinkAccent, Colors.purpleAccent],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.pinkAccent.withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(16),
-                onTap: _isProcessing ? null : () => _handleStripePayment(title),
-                child: Center(
-                  child: _isProcessing
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.credit_card,
                             color: Colors.white,
-                            strokeWidth: 2,
+                            size: 24,
                           ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.credit_card,
+                          const SizedBox(height: 4),
+                          Text(
+                            Platform.isIOS ? "Suscribirme" : "Pagar",
+                            style: const TextStyle(
                               color: Colors.white,
-                              size: 24,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              "Pagar",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
               ),
             ),
           ),
+        ),
       ],
     );
   }

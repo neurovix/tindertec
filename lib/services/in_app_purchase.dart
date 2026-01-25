@@ -8,17 +8,37 @@ import 'package:in_app_purchase_storekit/store_kit_wrappers.dart';
 class InAppPurchaseService {
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
   late StreamSubscription<List<PurchaseDetails>> _subscription;
+  Timer? _purchaseTimeout;
 
-  // ID del producto de suscripción
-  static const String premiumSubscriptionId = 'tindertec_premium';
+  // IDs de los productos de suscripción
+  static const String weeklyProductId = 'tindertec_premium_weekly';
+  static const String monthlyProductId = 'tindertec_premium_monthly';
+  static const String semiannualProductId = 'tindertec_premium_semesterly';
 
-  static const List<String> _productIds = [premiumSubscriptionId];
+  // ID legacy para compatibilidad
+  static const String legacyProductId = 'tindertec_premium';
+
+  static const List<String> _productIds = [
+    weeklyProductId,
+    monthlyProductId,
+    semiannualProductId,
+  ];
 
   List<ProductDetails> _products = [];
   List<ProductDetails> get products => _products;
 
+  // Getter para compatibilidad con código antiguo (retorna el primer producto)
   ProductDetails? get premiumProduct =>
       _products.isEmpty ? null : _products.first;
+
+  ProductDetails? getProductById(String productId) {
+    try {
+      return _products.firstWhere((p) => p.id == productId);
+    } catch (e) {
+      debugPrint('❌ Producto no encontrado: $productId');
+      return null;
+    }
+  }
 
   bool _isAvailable = false;
   bool get isAvailable => _isAvailable;
@@ -30,11 +50,13 @@ class InAppPurchaseService {
   final void Function(PurchaseDetails)? onPurchaseCompleted;
   final void Function(String)? onPurchaseError;
   final void Function(bool)? onPurchasingStateChanged;
+  final void Function()? onProductsLoaded;
 
   InAppPurchaseService({
     this.onPurchaseCompleted,
     this.onPurchaseError,
     this.onPurchasingStateChanged,
+    this.onProductsLoaded,
   });
 
   /// 🧪 MÉTODO DE PRUEBA - Verificar productos disponibles
@@ -50,7 +72,7 @@ class InAppPurchaseService {
       return;
     }
 
-    // Test 2: Probar con múltiples Product IDs (por si el nombre está mal)
+    // Test 2: Probar con múltiples Product IDs
     final testIds = {
       'tindertec_premium',
       'tindertec_premium_weekly',
@@ -93,7 +115,7 @@ class InAppPurchaseService {
     }
 
     _isAvailable = await _inAppPurchase.isAvailable();
-    debugPrint('🏪 Tienda disponible: $_isAvailable');
+    debugPrint('🪙 Tienda disponible: $_isAvailable');
 
     if (!_isAvailable) {
       debugPrint('❌ La tienda no está disponible');
@@ -133,36 +155,62 @@ class InAppPurchaseService {
   Future<void> loadProducts() async {
     if (!_isAvailable) {
       debugPrint('⚠️ No se pueden cargar productos: tienda no disponible');
+      onPurchaseError?.call('La tienda no está disponible');
       return;
     }
 
     debugPrint('🛒 Cargando productos: $_productIds');
 
-    final ProductDetailsResponse response = await _inAppPurchase
-        .queryProductDetails(_productIds.toSet());
+    try {
+      final ProductDetailsResponse response = await _inAppPurchase
+          .queryProductDetails(_productIds.toSet());
 
-    if (response.error != null) {
-      debugPrint('❌ Error al cargar productos: ${response.error}');
-      onPurchaseError?.call('No se pudieron cargar los productos');
-      return;
-    }
+      if (response.error != null) {
+        debugPrint('❌ Error al cargar productos: ${response.error}');
+        onPurchaseError?.call(
+          'No se pudieron cargar los productos: ${response.error!.message}',
+        );
+        return;
+      }
 
-    if (response.productDetails.isEmpty) {
-      debugPrint('⚠️ No se encontraron productos');
-      onPurchaseError?.call('No se encontró el producto Premium');
-      return;
-    }
+      if (response.productDetails.isEmpty) {
+        debugPrint('⚠️ No se encontraron productos');
+        debugPrint('⚠️ Productos no encontrados: ${response.notFoundIDs}');
+        onPurchaseError?.call('No se encontraron productos en la tienda');
+        return;
+      }
 
-    _products = response.productDetails;
-    debugPrint('✅ Productos cargados: ${_products.length}');
-    for (var product in _products) {
-      debugPrint('   📦 ${product.id} - ${product.price}');
+      _products = response.productDetails;
+      debugPrint('✅ Productos cargados: ${_products.length}');
+      for (var product in _products) {
+        debugPrint('   📦 ${product.id} - ${product.price}');
+      }
+
+      // Notificar que los productos se cargaron
+      onProductsLoaded?.call();
+    } catch (e) {
+      debugPrint('❌ Excepción al cargar productos: $e');
+      onPurchaseError?.call('Error al cargar productos: $e');
     }
   }
 
-  /// Comprar suscripción Premium
+  /// Comprar suscripción Premium (método legacy para compatibilidad)
   Future<void> buyPremiumSubscription() async {
-    debugPrint('🛍️ Intentando comprar suscripción');
+    debugPrint('🛍️ buyPremiumSubscription llamado (método legacy)');
+
+    // Usar el primer producto disponible
+    if (_products.isEmpty) {
+      debugPrint('❌ No hay productos disponibles');
+      onPurchaseError?.call('No hay productos disponibles');
+      return;
+    }
+
+    await buySubscription(_products.first.id);
+  }
+
+  /// Comprar suscripción por ID de producto
+  Future<void> buySubscription(String productId) async {
+    debugPrint('🛍️ Intentando comprar suscripción: $productId');
 
     if (!_isAvailable) {
       debugPrint('❌ Tienda no disponible');
@@ -175,20 +223,29 @@ class InAppPurchaseService {
       return;
     }
 
-    if (premiumProduct == null) {
-      debugPrint('❌ Producto Premium no disponible');
-      onPurchaseError?.call('El producto Premium no está disponible');
+    final product = getProductById(productId);
+    if (product == null) {
+      debugPrint('❌ Producto no encontrado: $productId');
+      onPurchaseError?.call('El producto no está disponible');
       return;
     }
 
     _updatePurchasingState(true);
 
-    final PurchaseParam purchaseParam = PurchaseParam(
-      productDetails: premiumProduct!,
-    );
+    // Timeout de seguridad: Si después de 60 segundos no hay respuesta, resetear el estado
+    _purchaseTimeout?.cancel();
+    _purchaseTimeout = Timer(const Duration(seconds: 60), () {
+      if (_isPurchasing) {
+        debugPrint('⏰ Timeout: Reseteando estado de compra');
+        _updatePurchasingState(false);
+        onPurchaseError?.call('La operación tomó demasiado tiempo');
+      }
+    });
+
+    final PurchaseParam purchaseParam = PurchaseParam(productDetails: product);
 
     try {
-      debugPrint('💳 Iniciando compra de: ${premiumProduct!.id}');
+      debugPrint('💳 Iniciando compra de: ${product.id}');
 
       // Para suscripciones, usa buyNonConsumable
       final bool success = await _inAppPurchase.buyNonConsumable(
@@ -199,11 +256,15 @@ class InAppPurchaseService {
 
       if (!success) {
         debugPrint('❌ buyNonConsumable retornó false');
+        _purchaseTimeout?.cancel();
         _updatePurchasingState(false);
         onPurchaseError?.call('No se pudo iniciar la compra');
       }
+      // Si success es true, el estado se actualizará en _onPurchaseUpdate
+      // cuando llegue el evento de compra (purchased, canceled, error, etc)
     } catch (e) {
       debugPrint('❌ Excepción al comprar: $e');
+      _purchaseTimeout?.cancel();
       _updatePurchasingState(false);
       onPurchaseError?.call('Error al procesar la compra');
     }
@@ -236,6 +297,9 @@ class InAppPurchaseService {
         '🔄 Estado: ${purchaseDetails.status} - Producto: ${purchaseDetails.productID}',
       );
 
+      // Cancelar timeout cuando recibimos una actualización
+      _purchaseTimeout?.cancel();
+
       if (purchaseDetails.status == PurchaseStatus.pending) {
         debugPrint('⏳ Compra pendiente...');
         _updatePurchasingState(true);
@@ -264,6 +328,13 @@ class InAppPurchaseService {
       } else if (purchaseDetails.status == PurchaseStatus.canceled) {
         debugPrint('🚫 Compra cancelada por el usuario');
         _updatePurchasingState(false);
+
+        // Completar la transacción cancelada para limpiarla de la cola
+        if (purchaseDetails.pendingCompletePurchase) {
+          _inAppPurchase.completePurchase(purchaseDetails);
+        }
+
+        // Notificar la cancelación
         onPurchaseError?.call('Compra cancelada');
       }
     }
@@ -306,6 +377,7 @@ class InAppPurchaseService {
   /// Limpiar recursos
   void dispose() {
     debugPrint('🧹 Limpiando recursos IAP');
+    _purchaseTimeout?.cancel();
     _subscription.cancel();
   }
 }

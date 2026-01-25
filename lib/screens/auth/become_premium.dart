@@ -16,7 +16,20 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
   bool _isProcessing = false;
   InAppPurchaseService? _iapService;
   bool _isLoadingIAP = true;
-  String? _productPrice;
+
+  // Mapa de precios para iOS (se actualizan desde IAP)
+  Map<String, String> _iosPrices = {
+    InAppPurchaseService.weeklyProductId: 'Cargando...',
+    InAppPurchaseService.monthlyProductId: 'Cargando...',
+    InAppPurchaseService.semiannualProductId: 'Cargando...',
+  };
+
+  // Precios fijos para Android
+  static const Map<String, String> _androidPrices = {
+    'Semanal': '20 MXN',
+    'Mensual': '50 MXN',
+    'Semestral': '100 MXN',
+  };
 
   @override
   void initState() {
@@ -48,77 +61,114 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
           });
         }
       },
+      onProductsLoaded: () {
+        // Actualizar precios cuando los productos se cargan
+        if (mounted) {
+          _updateIOSPrices();
+        }
+      },
     );
 
     await _iapService!.initialize();
 
+    // Ejecutar test de conexión (opcional, puedes comentarlo en producción)
     await _iapService!.testProductConnection();
-
-    // Obtener el precio del producto
-    if (_iapService!.premiumProduct != null) {
-      setState(() {
-        _productPrice = _iapService!.premiumProduct!.price;
-      });
-    }
 
     setState(() {
       _isLoadingIAP = false;
     });
   }
 
+  // Actualizar precios de iOS desde los productos cargados
+  void _updateIOSPrices() {
+    if (_iapService == null) return;
+
+    setState(() {
+      for (var product in _iapService!.products) {
+        _iosPrices[product.id] = product.price;
+      }
+    });
+
+    debugPrint('✅ Precios actualizados: $_iosPrices');
+  }
+
+  // Obtener precio según plataforma
+  String _getPrice(String productId, String planName) {
+    if (Platform.isIOS) {
+      return _iosPrices[productId] ?? 'N/A';
+    } else {
+      return _androidPrices[planName] ?? 'N/A';
+    }
+  }
+
   // Manejar compra completada de IAP
   void _handleIAPPurchaseCompleted(PurchaseDetails purchase) async {
-    debugPrint('Compra IAP completada: ${purchase.productID}');
+    debugPrint('✅ Compra IAP completada: ${purchase.productID}');
 
-    // Aquí actualiza el estado premium del usuario en tu backend
     final user = Supabase.instance.client.auth.currentUser;
     final String? userId = user?.id;
 
     if (userId == null || userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('No se pudo encontrar una sesion activa')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo encontrar una sesión activa'),
+          ),
+        );
+      }
+      return;
     }
 
     try {
-      final _ = await Supabase.instance.client
+      await Supabase.instance.client
           .from("users")
           .update({'is_premium': true})
-          .eq('id_user', userId.toString());
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo actualizar a premium.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+          .eq('id_user', userId);
 
-    _showSuccessDialog();
+      if (mounted) {
+        _showSuccessDialog();
+      }
+    } catch (e) {
+      debugPrint('❌ Error al actualizar usuario: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo actualizar a premium.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Manejar error de IAP
   void _handleIAPPurchaseError(String error) {
+    // No mostrar ningún mensaje si el usuario canceló
     if (error.toLowerCase().contains('cancelad')) {
-      // No mostrar error si el usuario canceló
+      debugPrint('ℹ️ Usuario canceló la compra (no se muestra error)');
       return;
     }
-    _showErrorDialog(error);
+
+    // No mostrar error para timeout si no hay otra acción del usuario
+    if (error.toLowerCase().contains('demasiado tiempo')) {
+      debugPrint('⏰ Timeout de compra');
+      return;
+    }
+
+    // Solo mostrar errores reales
+    if (mounted) {
+      _showErrorDialog(error);
+    }
   }
 
   // Función para manejar compra con IAP (iOS)
-  Future<void> _handleIAPPurchase() async {
-    if (_iapService == null || !_iapService!.isAvailable) {
-      _showErrorDialog('La tienda no está disponible en este momento');
+  Future<void> _handleIAPPurchase(String productId) async {
+    if (_iapService == null) {
+      _showErrorDialog('Servicio de compras no disponible');
       return;
     }
 
-    if (_iapService!.premiumProduct == null) {
-      _showErrorDialog('El producto Premium no está disponible');
-      return;
-    }
-
-    await _iapService!.buyPremiumSubscription();
+    await _iapService!.buySubscription(productId);
   }
 
   // Restaurar compras (iOS)
@@ -153,13 +203,23 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
     }
   }
 
+  int _getSubscriptionPrice(String planName) {
+    switch (planName) {
+      case 'Semanal':
+        return 2000;
+      case 'Mensual':
+        return 5000;
+      default:
+        return 10000;
+    }
+  }
+
   // Función para manejar el pago con Stripe (Android)
-  Future<void> _handleStripePayment() async {
+  Future<void> _handleStripePayment(String planName) async {
     final user = Supabase.instance.client.auth.currentUser;
     final String? userId = user?.id;
     final String? userEmail = user?.email;
 
-    // 🔴 Validación de email
     if (userEmail == null || userEmail.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,12 +231,11 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
       return;
     }
 
-    // 🔴 Validación de id
     if (userId == null || userId.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No se pudo obtener el correo del usuario.'),
+          content: Text('No se pudo obtener el ID del usuario.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -189,7 +248,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
 
     try {
       final success = await StripeService.processPayment(
-        amount: 6000,
+        amount: _getSubscriptionPrice(planName),
         currency: 'mxn',
         context: context,
         userEmail: userEmail,
@@ -199,10 +258,12 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
         if (!mounted) return;
 
         try {
-          final _ = await Supabase.instance.client
+          await Supabase.instance.client
               .from("users")
               .update({'is_premium': true})
               .eq('id_user', userId);
+
+          _showSuccessDialog();
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -211,14 +272,12 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
             ),
           );
         }
-
-        _showSuccessDialog();
       } else {
         if (!mounted) return;
         _showErrorDialog('El pago fue cancelado o falló. Intenta nuevamente.');
       }
     } catch (e) {
-      debugPrint('Error en el pago: $e');
+      debugPrint('❌ Error en el pago: $e');
       if (!mounted) return;
       _showErrorDialog(
         'Ocurrió un error inesperado. Por favor, intenta nuevamente.',
@@ -242,8 +301,8 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   colors: [Colors.pinkAccent, Colors.purpleAccent],
                 ),
                 shape: BoxShape.circle,
@@ -332,382 +391,370 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 30),
-                  Column(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Colors.pinkAccent, Colors.purpleAccent],
+                      // Back Button y Restaurar
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.pinkAccent.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                            child: IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.arrow_back, size: 24),
+                            ),
+                          ),
+                          // Botón de restaurar compras (solo iOS)
+                          if (Platform.isIOS)
+                            TextButton(
+                              onPressed: _isProcessing
+                                  ? null
+                                  : _restorePurchases,
+                              child: const Text(
+                                'Restaurar',
+                                style: TextStyle(
+                                  color: Colors.pinkAccent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+                      Column(
+                        children: [
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Colors.pinkAccent,
+                                    Colors.purpleAccent,
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.pinkAccent.withOpacity(0.3),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.workspace_premium,
+                                size: 50,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Beneficios de volverte',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Colors.pinkAccent, Colors.purpleAccent],
+                            ).createShader(bounds),
+                            child: const Text(
+                              'PREMIUM',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.pinkAccent.withOpacity(0.15),
+                                      Colors.purpleAccent.withOpacity(0.15),
+                                    ],
+                                  ),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(
+                                        'Beneficio',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Center(
+                                        child: Text(
+                                          'Normal',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Center(
+                                        child: Text(
+                                          'Premium',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            color: Colors.pinkAccent,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _buildBenefitRow(
+                                '🔥 Likes diarios',
+                                '30',
+                                'Ilimitados',
+                                0,
+                              ),
+                              _buildDivider(),
+                              _buildBenefitRow(
+                                '💖 Ver a quién le gustas',
+                                '❌',
+                                '✅',
+                                1,
+                              ),
+                              _buildDivider(),
+                              _buildBenefitRow(
+                                '⏮️ Retroceder perfiles',
+                                '❌',
+                                '✅',
+                                3,
+                              ),
+                              _buildDivider(),
+                              _buildBenefitRow('✏️ Editar perfil', '❌', '✅', 4),
+                              _buildDivider(),
+                              _buildBenefitRow(
+                                '🙈 Alerta de match',
+                                '❌',
+                                '✅',
+                                5,
                               ),
                             ],
                           ),
-                          child: const Icon(
-                            Icons.workspace_premium,
-                            size: 50,
-                            color: Colors.white,
-                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      // Tarjetas de suscripción
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Semanal
+                            Expanded(
+                              child: _buildSubscriptionCard(
+                                title: 'Semanal',
+                                price: _getPrice(
+                                  InAppPurchaseService.weeklyProductId,
+                                  'Semanal',
+                                ),
+                                productId: InAppPurchaseService.weeklyProductId,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Mensual
+                            Expanded(
+                              child: _buildSubscriptionCard(
+                                title: 'Mensual',
+                                price: _getPrice(
+                                  InAppPurchaseService.monthlyProductId,
+                                  'Mensual',
+                                ),
+                                productId:
+                                    InAppPurchaseService.monthlyProductId,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Semestral
+                            Expanded(
+                              child: _buildSubscriptionCard(
+                                title: 'Semestral',
+                                price: _getPrice(
+                                  InAppPurchaseService.semiannualProductId,
+                                  'Semestral',
+                                ),
+                                productId:
+                                    InAppPurchaseService.semiannualProductId,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
-                      const Text(
-                        'Beneficios de volverte',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Colors.pinkAccent, Colors.purpleAccent],
-                        ).createShader(bounds),
-                        child: const Text(
-                          'PREMIUM',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 2,
+                      // Botón "No por ahora"
+                      Container(
+                        width: double.infinity,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          gradient: const LinearGradient(
+                            colors: [Colors.white, Colors.lightGreenAccent],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 20,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.pinkAccent.withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.pinkAccent.withOpacity(0.15),
-                                  Colors.purpleAccent.withOpacity(0.15),
-                                ],
-                              ),
-                            ),
-                            child: Row(
-                              children: const [
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    'Beneficio',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/',
+                                (route) => false,
+                              );
+                            },
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.thumb_down,
+                                  color: Colors.black,
+                                  size: 28,
                                 ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Center(
-                                    child: Text(
-                                      'Normal',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Center(
-                                    child: Text(
-                                      'Premium',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: Colors.pinkAccent,
-                                      ),
-                                    ),
+                                SizedBox(width: 12),
+                                Text(
+                                  "No por ahora",
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          _buildBenefitRow('🔥 Likes diarios', '30', 'Ilimitados', 0),
-                          _buildDivider(),
-                          _buildBenefitRow('💖 Ver a quién le gustas', '❌', '✅', 1),
-                          _buildDivider(),
-                          _buildBenefitRow('⏮️ Retroceder', '❌', '✅', 3),
-                          _buildDivider(),
-                          _buildBenefitRow('✍️ Editar perfil', '❌', '✅', 4),
-                          _buildDivider(),
-                          _buildBenefitRow('🙈 Alerta de match', '❌', '✅', 5),
-                        ],
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                  const SizedBox(height: 30),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              '\$',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.pinkAccent,
-                              ),
-                            ),
-                            const Text(
-                              '60 MXN',
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.black87,
-                                height: 1,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                ' / semestre',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Botón condicional basado en la plataforma
-                  if (Platform.isIOS)
-                    Container(
-                      width: double.infinity,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: const LinearGradient(
-                          colors: [Colors.pinkAccent, Colors.purpleAccent],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.pinkAccent.withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: (_isProcessing || _isLoadingIAP)
-                              ? null
-                              : _handleIAPPurchase,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (_isProcessing)
-                                const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              else
-                                const Icon(
-                                  Icons.credit_card,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              const SizedBox(width: 12),
-                              Text(
-                                _isProcessing
-                                    ? "Procesando..."
-                                    : "Suscribirme",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                  else if (Platform.isAndroid)
-                    Container(
-                      width: double.infinity,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: const LinearGradient(
-                          colors: [Colors.pinkAccent, Colors.purpleAccent],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.pinkAccent.withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: _isProcessing
-                              ? null
-                              : _handleStripePayment,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (_isProcessing)
-                                const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              else
-                                const Icon(
-                                  Icons.credit_card,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              const SizedBox(width: 12),
-                              Text(
-                                _isProcessing
-                                    ? "Procesando..."
-                                    : "Pagar con Stripe",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        colors: [Colors.white, Colors.lightGreenAccent],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.pinkAccent.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/',
-                                (route) => false,
-                          );
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              Icons.thumb_down,
-                              color: Colors.black,
-                              size: 28,
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              "No por ahora",
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
-            ),
+              // Overlay de procesamiento
+              if (_isProcessing || (Platform.isIOS && _isLoadingIAP))
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(
+                            color: Colors.pinkAccent,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _isLoadingIAP
+                                ? 'Cargando productos...'
+                                : 'Procesando pago...',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -715,11 +762,11 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
   }
 
   Widget _buildBenefitRow(
-      String benefit,
-      String normal,
-      String premium,
-      int index,
-      ) {
+    String benefit,
+    String normal,
+    String premium,
+    int index,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       child: Row(
@@ -728,10 +775,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
             flex: 2,
             child: Text(
               benefit,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
@@ -739,10 +783,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
             child: Center(
               child: Text(
                 normal,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
               ),
             ),
           ),
@@ -783,6 +824,95 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Divider(height: 1, color: Colors.grey.shade200),
+    );
+  }
+
+  Widget _buildSubscriptionCard({
+    required String title,
+    required String price,
+    required String productId,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          price,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          height: 60,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              colors: [Colors.pinkAccent, Colors.purpleAccent],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.pinkAccent.withOpacity(0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: (_isProcessing || (Platform.isIOS && _isLoadingIAP))
+                  ? null
+                  : () {
+                      if (Platform.isIOS) {
+                        _handleIAPPurchase(productId);
+                      } else {
+                        _handleStripePayment(title);
+                      }
+                    },
+              child: Center(
+                child: _isProcessing
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.credit_card,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            Platform.isIOS ? "Suscribirme" : "Pagar",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
