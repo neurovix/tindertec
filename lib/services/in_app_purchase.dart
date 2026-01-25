@@ -53,8 +53,9 @@ class InAppPurchaseService {
     // Test 2: Probar con múltiples Product IDs (por si el nombre está mal)
     final testIds = {
       'tindertec_premium',
-      'com.neurovix.tindertec', // Cambia "tuempresa" por tu bundle
-      'premium',
+      'tindertec_premium_weekly',
+      'tindertec_premium_monthly',
+      'tindertec_premium_semesterly',
     };
 
     debugPrint('🧪 Test 2 - Probando Product IDs: $testIds');

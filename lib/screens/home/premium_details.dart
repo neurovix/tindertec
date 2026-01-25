@@ -17,6 +17,8 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   InAppPurchaseService? _iapService;
   bool _isLoadingIAP = true;
   String? _productPrice;
+  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  List<ProductDetails> _products = [];
 
   @override
   void initState() {
@@ -24,6 +26,25 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     if (Platform.isIOS) {
       _initializeIAP();
     }
+  }
+
+  Future<void> _loadProducts() async {
+    const ids = {
+      'tindertec_weekly',
+      'tindertec_monthly',
+      'tindertec_semiannual',
+    };
+
+    final response = await _inAppPurchase.queryProductDetails(ids);
+
+    if (response.error != null || response.productDetails.isEmpty) {
+      debugPrint('Error cargando productos IAP');
+      return;
+    }
+
+    setState(() {
+      _products = response.productDetails;
+    });
   }
 
   @override
@@ -107,18 +128,12 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   }
 
   // Función para manejar compra con IAP (iOS)
-  Future<void> _handleIAPPurchase() async {
-    if (_iapService == null || !_iapService!.isAvailable) {
-      _showErrorDialog('La tienda no está disponible en este momento');
-      return;
-    }
+  Future<void> _handleIAPPurchase(String productId) async {
+    final product = _products.firstWhere((p) => p.id == productId);
 
-    if (_iapService!.premiumProduct == null) {
-      _showErrorDialog('El producto Premium no está disponible');
-      return;
-    }
+    final purchaseParam = PurchaseParam(productDetails: product);
 
-    await _iapService!.buyPremiumSubscription();
+    await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
   }
 
   // Restaurar compras (iOS)
@@ -153,8 +168,19 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     }
   }
 
+  int _getSubscriptionPrice(String planName) {
+    switch (planName) {
+      case 'Semanal':
+        return 2000;
+      case 'Mensual':
+        return 6000;
+      default:
+        return 10000;
+    }
+  }
+
   // Función para manejar el pago con Stripe (Android)
-  Future<void> _handleStripePayment() async {
+  Future<void> _handleStripePayment(String planName) async {
     final user = Supabase.instance.client.auth.currentUser;
     final String? userId = user?.id;
     final String? userEmail = user?.email;
@@ -176,7 +202,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No se pudo obtener el correo del usuario.'),
+          content: Text('No se pudo obtener el uuid del usuario.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -189,7 +215,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
 
     try {
       final success = await StripeService.processPayment(
-        amount: 6000,
+        amount: _getSubscriptionPrice(planName),
         currency: 'mxn',
         context: context,
         userEmail: userEmail,
@@ -538,7 +564,10 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                       ),
                       const SizedBox(height: 30),
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 20,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
@@ -550,178 +579,38 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             ),
                           ],
                         ),
-                        child: Column(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            if (Platform.isIOS && _isLoadingIAP)
-                              const CircularProgressIndicator(
-                                color: Colors.pinkAccent,
-                              )
-                            else
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    Platform.isIOS && _productPrice != null
-                                        ? _productPrice!.substring(0, 1)
-                                        : '\$',
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.pinkAccent,
-                                    ),
-                                  ),
-                                  Text(
-                                    Platform.isIOS && _productPrice != null
-                                        ? _productPrice!.substring(1)
-                                        : '60 MXN',
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.black87,
-                                      height: 1,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(
-                                      ' / semestre',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                            // Semanal
+                            Expanded(
+                              child: _buildSubscriptionCard(
+                                title: 'Semanal',
+                                price: '20 MXN',
+                                productId: 'tindertec_premium_weekly',
                               ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Mensual
+                            Expanded(
+                              child: _buildSubscriptionCard(
+                                title: 'Mensual',
+                                price: '50 MXN',
+                                productId: 'tindertec_premium_monthly',
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Semestral
+                            Expanded(
+                              child: _buildSubscriptionCard(
+                                title: 'Semestral',
+                                price: '100 MXN',
+                                productId: 'tindertec_premium_semesterly',
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      // Botón condicional basado en la plataforma
-                      if (Platform.isIOS)
-                        Container(
-                          width: double.infinity,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: const LinearGradient(
-                              colors: [Colors.pinkAccent, Colors.purpleAccent],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.pinkAccent.withOpacity(0.4),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: (_isProcessing || _isLoadingIAP)
-                                  ? null
-                                  : _handleIAPPurchase,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (_isProcessing)
-                                    const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  else
-                                    const Icon(
-                                      Icons.credit_card,
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _isProcessing
-                                        ? "Procesando..."
-                                        : "Suscribirme",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
-                      else if (Platform.isAndroid)
-                        Container(
-                          width: double.infinity,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            gradient: const LinearGradient(
-                              colors: [Colors.pinkAccent, Colors.purpleAccent],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.pinkAccent.withOpacity(0.4),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: _isProcessing
-                                  ? null
-                                  : _handleStripePayment,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (_isProcessing)
-                                    const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  else
-                                    const Icon(
-                                      Icons.credit_card,
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    _isProcessing
-                                        ? "Procesando..."
-                                        : "Pagar con Stripe",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -832,6 +721,148 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Divider(height: 1, color: Colors.grey.shade200),
+    );
+  }
+
+  Widget _buildSubscriptionCard({
+    required String title,
+    required String price,
+    required String productId,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          price,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        if (Platform.isIOS)
+          Container(
+            width: double.infinity,
+            height: 60,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Colors.pinkAccent, Colors.purpleAccent],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.pinkAccent.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: (_isProcessing || _isLoadingIAP)
+                    ? null
+                    : () => _handleIAPPurchase(productId),
+                child: Center(
+                  child: _isProcessing
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.credit_card,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Suscribirme",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          )
+        else if (Platform.isAndroid)
+          Container(
+            width: double.infinity,
+            height: 60,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: const LinearGradient(
+                colors: [Colors.pinkAccent, Colors.purpleAccent],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.pinkAccent.withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: _isProcessing ? null : () => _handleStripePayment(title),
+                child: Center(
+                  child: _isProcessing
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.credit_card,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "Pagar",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
