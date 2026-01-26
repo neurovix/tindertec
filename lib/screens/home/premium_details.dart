@@ -18,7 +18,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   bool _isLoadingIAP = true;
 
   // Mapa de precios para iOS (se actualizan desde IAP)
-  final Map<String, String> _iosPrices = {
+  Map<String, String> _iosPrices = {
     InAppPurchaseService.weeklyProductId: 'Cargando...',
     InAppPurchaseService.monthlyProductId: 'Cargando...',
     InAppPurchaseService.semiannualProductId: 'Cargando...',
@@ -98,6 +98,25 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     }
   }
 
+  // Calcular fecha de expiración según el plan
+  DateTime _calculatePremiumUntil(String productId) {
+    final now = DateTime.now();
+
+    if (productId == InAppPurchaseService.weeklyProductId) {
+      // Semanal: +7 días
+      return now.add(const Duration(days: 7));
+    } else if (productId == InAppPurchaseService.monthlyProductId) {
+      // Mensual: +30 días
+      return now.add(const Duration(days: 30));
+    } else if (productId == InAppPurchaseService.semiannualProductId) {
+      // Semestral: +180 días (aproximadamente 6 meses)
+      return now.add(const Duration(days: 180));
+    }
+
+    // Por defecto: +30 días
+    return now.add(const Duration(days: 30));
+  }
+
   // Manejar compra completada de IAP
   void _handleIAPPurchaseCompleted(PurchaseDetails purchase) async {
     debugPrint('✅ Compra IAP completada: ${purchase.productID}');
@@ -117,9 +136,17 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
     }
 
     try {
+      // Calcular fecha de expiración
+      final premiumUntil = _calculatePremiumUntil(purchase.productID);
+
+      debugPrint('📅 Premium hasta: $premiumUntil');
+
       await Supabase.instance.client
           .from("users")
-          .update({'is_premium': true})
+          .update({
+            'is_premium': true,
+            'premium_until': premiumUntil.toIso8601String(),
+          })
           .eq('id_user', userId);
 
       if (mounted) {
@@ -162,14 +189,6 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   Future<void> _handleIAPPurchase(String productId) async {
     if (_iapService == null) {
       _showErrorDialog('Servicio de compras no disponible');
-      return;
-    }
-
-    final exists = _iapService!.products.any((p) => p.id == productId);
-
-    if (!exists) {
-      _showErrorDialog('Producto no disponible en App Store');
-      debugPrint('❌ Producto NO cargado: $productId');
       return;
     }
 
@@ -263,9 +282,32 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
         if (!mounted) return;
 
         try {
+          // Calcular fecha de expiración según el plan
+          final now = DateTime.now();
+          DateTime premiumUntil;
+
+          switch (planName) {
+            case 'Semanal':
+              premiumUntil = now.add(const Duration(days: 7));
+              break;
+            case 'Mensual':
+              premiumUntil = now.add(const Duration(days: 30));
+              break;
+            case 'Semestral':
+              premiumUntil = now.add(const Duration(days: 180));
+              break;
+            default:
+              premiumUntil = now.add(const Duration(days: 30));
+          }
+
+          debugPrint('📅 Premium hasta: $premiumUntil');
+
           await Supabase.instance.client
               .from("users")
-              .update({'is_premium': true})
+              .update({
+                'is_premium': true,
+                'premium_until': premiumUntil.toIso8601String(),
+              })
               .eq('id_user', userId);
 
           _showSuccessDialog();
@@ -294,6 +336,11 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
         });
       }
     }
+  }
+
+  // Navegar al home
+  void _navigateToHome() {
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
   }
 
   void _showSuccessDialog() {
@@ -336,10 +383,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
+              onPressed: _navigateToHome,
               child: const Text(
                 'Continuar',
                 style: TextStyle(
