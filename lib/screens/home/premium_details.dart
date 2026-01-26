@@ -18,7 +18,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   bool _isLoadingIAP = true;
 
   // Mapa de precios para iOS (se actualizan desde IAP)
-  Map<String, String> _iosPrices = {
+  final Map<String, String> _iosPrices = {
     InAppPurchaseService.weeklyProductId: 'Cargando...',
     InAppPurchaseService.monthlyProductId: 'Cargando...',
     InAppPurchaseService.semiannualProductId: 'Cargando...',
@@ -162,6 +162,14 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
   Future<void> _handleIAPPurchase(String productId) async {
     if (_iapService == null) {
       _showErrorDialog('Servicio de compras no disponible');
+      return;
+    }
+
+    final exists = _iapService!.products.any((p) => p.id == productId);
+
+    if (!exists) {
+      _showErrorDialog('Producto no disponible en App Store');
+      debugPrint('❌ Producto NO cargado: $productId');
       return;
     }
 

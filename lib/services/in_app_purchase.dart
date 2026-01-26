@@ -145,6 +145,16 @@ class InAppPurchaseService {
           .getPlatformAddition<InAppPurchaseStoreKitPlatformAddition>();
 
       await iosAddition.setDelegate(PaymentQueueDelegate());
+
+      // 🔧 Limpiar transacciones pendientes del sandbox
+      debugPrint('🧹 Limpiando transacciones pendientes...');
+      final transactions = await SKPaymentQueueWrapper().transactions();
+      for (var transaction in transactions) {
+        debugPrint(
+          '🗑️ Completando transacción pendiente: ${transaction.transactionIdentifier}',
+        );
+        await SKPaymentQueueWrapper().finishTransaction(transaction);
+      }
     }
 
     // ✅ AHORA sí cargar productos

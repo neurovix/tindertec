@@ -18,7 +18,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
   bool _isLoadingIAP = true;
 
   // Mapa de precios para iOS (se actualizan desde IAP)
-  Map<String, String> _iosPrices = {
+  final Map<String, String> _iosPrices = {
     InAppPurchaseService.weeklyProductId: 'Cargando...',
     InAppPurchaseService.monthlyProductId: 'Cargando...',
     InAppPurchaseService.semiannualProductId: 'Cargando...',
@@ -168,6 +168,14 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
       return;
     }
 
+    final exists = _iapService!.products.any((p) => p.id == productId);
+
+    if (!exists) {
+      _showErrorDialog('Producto no disponible en App Store');
+      debugPrint('❌ Producto NO cargado: $productId');
+      return;
+    }
+
     await _iapService!.buySubscription(productId);
   }
 
@@ -291,6 +299,11 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
     }
   }
 
+  // Navegar al home
+  void _navigateToHome() {
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+  }
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -331,10 +344,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
+              onPressed: _navigateToHome,
               child: const Text(
                 'Continuar',
                 style: TextStyle(
@@ -680,13 +690,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/',
-                                (route) => false,
-                              );
-                            },
+                            onTap: _navigateToHome,
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
