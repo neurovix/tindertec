@@ -62,7 +62,9 @@ class _MatchesPageState extends State<MatchesPage> {
 
       return matchesList;
     } catch (e) {
-      debugPrint('❌ Error fetching matches: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar matches')));
       return [];
     }
   }

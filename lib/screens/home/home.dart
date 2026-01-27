@@ -44,8 +44,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('😔 Likes agotados'),
         content: const Text(
           'Tus likes diarios se han acabado.\n\n'
-              'Vuélvete premium para likes ilimitados '
-              'o espera hasta mañana.',
+          'Vuélvete premium para likes ilimitados '
+          'o espera hasta mañana.',
         ),
         actions: [
           TextButton(
@@ -168,13 +168,8 @@ class _HomePageState extends State<HomePage> {
       if (!isPremium) {
         final canSwipe = await client.rpc(
           'check_and_add_swipe',
-          params: {
-            'p_user_id': currentUser.id,
-          },
+          params: {'p_user_id': currentUser.id},
         );
-
-        final bool res = canSwipe == true;
-        debugPrint('RPC RESULT: $res');
 
         if (canSwipe == false) {
           _showSwipeLimitDialog();
@@ -189,17 +184,19 @@ class _HomePageState extends State<HomePage> {
         'id_user_to': likedUser.id,
       });
     } catch (e) {
-      debugPrint('❌ Error on like: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al dar like')));
     }
   }
 
   void _onDislike(UserCard user) {}
 
   Future<bool> _onSwipe(
-      int previousIndex,
-      int? currentIndex,
-      CardSwiperDirection direction,
-      ) async {
+    int previousIndex,
+    int? currentIndex,
+    CardSwiperDirection direction,
+  ) async {
     if (previousIndex < 0 || previousIndex >= _cards.length) {
       return false;
     }

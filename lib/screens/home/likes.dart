@@ -56,7 +56,6 @@ class _LikesScreenState extends State<LikesScreen> {
       }
     } catch (e) {
       error = 'Error al cargar likes';
-      debugPrint(e.toString());
     }
 
     setState(() => loading = false);

@@ -72,7 +72,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
     await _iapService!.initialize();
 
     // Ejecutar test de conexión (opcional, puedes comentarlo en producción)
-    await _iapService!.testProductConnection();
+    // await _iapService!.testProductConnection();
 
     setState(() {
       _isLoadingIAP = false;
@@ -88,8 +88,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
         _iosPrices[product.id] = product.price;
       }
     });
-
-    debugPrint('✅ Precios actualizados: $_iosPrices');
   }
 
   // Obtener precio según plataforma
@@ -122,8 +120,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
 
   // Manejar compra completada de IAP
   void _handleIAPPurchaseCompleted(PurchaseDetails purchase) async {
-    debugPrint('✅ Compra IAP completada: ${purchase.productID}');
-
     final user = Supabase.instance.client.auth.currentUser;
     final String? userId = user?.id;
 
@@ -142,8 +138,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
       // Calcular fecha de expiración
       final premiumUntil = _calculatePremiumUntil(purchase.productID);
 
-      debugPrint('📅 Premium hasta: $premiumUntil');
-
       await Supabase.instance.client
           .from("users")
           .update({
@@ -156,7 +150,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
         _showSuccessDialog();
       }
     } catch (e) {
-      debugPrint('❌ Error al actualizar usuario: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -172,13 +165,11 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
   void _handleIAPPurchaseError(String error) {
     // No mostrar ningún mensaje si el usuario canceló
     if (error.toLowerCase().contains('cancelad')) {
-      debugPrint('ℹ️ Usuario canceló la compra (no se muestra error)');
       return;
     }
 
     // No mostrar error para timeout si no hay otra acción del usuario
     if (error.toLowerCase().contains('demasiado tiempo')) {
-      debugPrint('⏰ Timeout de compra');
       return;
     }
 
@@ -199,7 +190,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
 
     if (!exists) {
       _showErrorDialog('Producto no disponible en App Store');
-      debugPrint('❌ Producto NO cargado: $productId');
       return;
     }
 
@@ -311,8 +301,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
               premiumUntil = now.add(const Duration(days: 30));
           }
 
-          debugPrint('📅 Premium hasta: $premiumUntil');
-
           await Supabase.instance.client
               .from("users")
               .update({
@@ -335,7 +323,6 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
         _showErrorDialog('El pago fue cancelado o falló. Intenta nuevamente.');
       }
     } catch (e) {
-      debugPrint('❌ Error en el pago: $e');
       if (!mounted) return;
       _showErrorDialog(
         'Ocurrió un error inesperado. Por favor, intenta nuevamente.',

@@ -51,7 +51,7 @@ class _TextWelcomeScreen extends State<TextWelcomeScreen> {
 
               const Center(
                 child: Text(
-                  'Te damos la bienvenida a TINDERTEC',
+                  'Te damos la bienvenida a ConectaTec',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),

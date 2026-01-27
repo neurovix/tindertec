@@ -19,30 +19,27 @@ class CardUser extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        debugPrint('🟢 Card tapped: ${user.name}');
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => UserDetailPage(userId: user.id, source: UserDetailSource.swiper),
+            builder: (_) => UserDetailPage(
+              userId: user.id,
+              source: UserDetailSource.swiper,
+            ),
           ),
         );
       },
       child: Card(
         elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Stack(
           fit: StackFit.expand,
           children: [
             user.photos.isNotEmpty
                 ? ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.network(
-                user.photos.first,
-                fit: BoxFit.cover,
-              ),
-            )
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(user.photos.first, fit: BoxFit.cover),
+                  )
                 : Container(color: Colors.grey),
             Container(
               decoration: BoxDecoration(
@@ -50,10 +47,7 @@ class CardUser extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
                 ),
               ),
             ),

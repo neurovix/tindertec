@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Tindertec</string>
+	<string>ConectaTec</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,23 +15,23 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>tindertec</string>
+	<string>conectatec</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>NSCameraUsageDescription</key>
-    <string>TinderTec necesita acceso a la cámara para que los usuarios puedan subir fotos a su perfil.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>TinderTec necesita acceso a la galería para que los usuarios puedan seleccionar fotos para su perfil.</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>TinderTec necesita guardar imágenes seleccionadas por el usuario.</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ConectaTec necesita acceso a la cámara para que los usuarios puedan subir fotos a su perfil.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ConectaTec necesita guardar imágenes seleccionadas por el usuario.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ContectaTec necesita acceso a la galería para que los usuarios puedan seleccionar fotos para su perfil.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

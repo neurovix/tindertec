@@ -25,7 +25,6 @@ class StripeService {
       );
       return response;
     } catch (e) {
-      debugPrint('Error creating customer: $e');
       return null;
     }
   }
@@ -50,7 +49,6 @@ class StripeService {
       );
       return response;
     } catch (e) {
-      debugPrint('Error creating payment intent: $e');
       return null;
     }
   }
@@ -74,7 +72,6 @@ class StripeService {
       );
       return response;
     } catch (e) {
-      debugPrint('Error creating subscription: $e');
       return null;
     }
   }
@@ -102,7 +99,6 @@ class StripeService {
       );
       return true;
     } catch (e) {
-      debugPrint('Error initializing payment sheet: $e');
       return false;
     }
   }
@@ -113,11 +109,6 @@ class StripeService {
       await Stripe.instance.presentPaymentSheet();
       return true;
     } catch (e) {
-      if (e is StripeException) {
-        debugPrint('Error from Stripe: ${e.error.localizedMessage}');
-      } else {
-        debugPrint('Unforeseen error: $e');
-      }
       return false;
     }
   }
@@ -150,13 +141,9 @@ class StripeService {
           requestResponse.statusCode == 201) {
         return json.decode(requestResponse.body);
       } else {
-        debugPrint(
-          'API Error: ${requestResponse.statusCode} - ${requestResponse.body}',
-        );
         return null;
       }
     } catch (err) {
-      debugPrint("${requestMethod.name.toUpperCase()} Error: $err");
       return null;
     }
   }
@@ -195,7 +182,6 @@ class StripeService {
 
       return success;
     } catch (e) {
-      debugPrint('Error processing payment: $e');
       return false;
     }
   }

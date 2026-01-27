@@ -39,21 +39,16 @@ class _PasswordScreenState extends State<PasswordScreen> {
       );
 
       if (result == null) {
-        debugPrint('⚠️ Compresión falló, usando archivo original');
         return file;
       }
 
       final compressedFile = File(result.path);
-      final originalSize = await file.length();
-      final compressedSize = await compressedFile.length();
-
-      debugPrint(
-        '✅ Imagen comprimida: ${(originalSize / 1024).toStringAsFixed(2)} KB → ${(compressedSize / 1024).toStringAsFixed(2)} KB',
-      );
 
       return compressedFile;
     } catch (e) {
-      debugPrint('⚠️ Error en compresión: $e, usando archivo original');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al comprimir imagen, usando original')),
+      );
       return file;
     }
   }
@@ -144,10 +139,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     if (data.degree == 'Otra') {
       final otraId = await fetchDegreeId('Otra');
 
-      return {
-        'id_degree': otraId,
-        'custom_degree': data.customDegree,
-      };
+      return {'id_degree': otraId, 'custom_degree': data.customDegree};
     }
 
     return {
@@ -175,9 +167,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
       final userId = user.id;
 
       final degreeData = await resolveDegree(data);
-
-      debugPrint('DEGREE: ${data.degree}');
-      debugPrint('CUSTOM DEGREE: ${data.customDegree}');
 
       await Supabase.instance.client.from('users').insert({
         'id_user': userId,
@@ -231,7 +220,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.toString())));
-        debugPrint("Error: $e");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -244,6 +232,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
       }
     }
   }
+
+  bool get isPasswordValid => passwordController.text.trim().length >= 6;
 
   // -------------------- UI --------------------
 
@@ -266,13 +256,17 @@ class _PasswordScreenState extends State<PasswordScreen> {
                 ],
               )
             : ElevatedButton(
-                onPressed: passwordController.text.trim().isEmpty
-                    ? null
-                    : () {
+                onPressed: isPasswordValid
+                    ? () {
                         setState(() => _isLoading = true);
                         handleSupabaseRegister(data);
-                      },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isPasswordValid
+                      ? Colors.black
+                      : Colors.grey.shade400,
+                ),
                 child: const Text(
                   'Crear cuenta',
                   style: TextStyle(fontSize: 18, color: Colors.white),

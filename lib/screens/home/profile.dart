@@ -162,7 +162,6 @@ class _ProfilePageState extends State<ProfilePage>
         throw Exception('Update blocked by RLS');
       }
     } catch (e) {
-      debugPrint('❌ Error updating name: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error al actualizar descripción, intenta más tarde'),
@@ -195,7 +194,6 @@ class _ProfilePageState extends State<ProfilePage>
         throw Exception('Update blocked by RLS');
       }
     } catch (e) {
-      debugPrint('❌ Error updating description: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error al actualizar descripción, intenta más tarde'),
@@ -228,7 +226,6 @@ class _ProfilePageState extends State<ProfilePage>
         throw Exception('Update blocked by RLS');
       }
     } catch (e) {
-      debugPrint('❌ Error updating instagram: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error al actualizar descripción, intenta más tarde'),
@@ -253,7 +250,6 @@ class _ProfilePageState extends State<ProfilePage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error al eliminar cuenta: $e")));
-      debugPrint("Error: $e");
     }
   }
 
@@ -531,7 +527,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         content: const Column(
                                           mainAxisSize: MainAxisSize.min,
                                           crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text('Nombre: Fernando Vazquez'),
                                             SizedBox(height: 8),
@@ -539,14 +535,13 @@ class _ProfilePageState extends State<ProfilePage>
                                               'Email: fervazquez@neurovix.com.mx',
                                             ),
                                             SizedBox(height: 8),
-                                            Text(
-                                              'Posicion: CEO & Programador',
-                                            ),
+                                            Text('Posicion: CEO & Programador'),
                                           ],
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(context),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
                                             child: const Text('Cerrar'),
                                           ),
                                         ],
@@ -613,7 +608,7 @@ class _ProfilePageState extends State<ProfilePage>
               Icon(Icons.workspace_premium, color: Colors.white, size: 28),
               const SizedBox(width: 8),
               const Text(
-                'TINDERTEC PREMIUM',
+                'CONECTATEC PREMIUM',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

@@ -94,8 +94,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
           .eq('id_user', widget.userId)
           .single();
 
-      debugPrint('HABITS RAW -> ${res['user_has_life_habits']}');
-
       setState(() {
         user = UserCard.fromMap(res);
         loading = false;
@@ -105,7 +103,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
         error = 'Error al cargar la información del usuario';
         loading = false;
       });
-      debugPrint('Error fetching user details: $e');
     }
   }
 
@@ -278,9 +275,6 @@ class _UserDetailPageState extends State<UserDetailPage> {
           params: {'p_user_id': currentUser.id},
         );
 
-        final bool res = canSwipe == true;
-        debugPrint('RPC RESULT: $res');
-
         if (canSwipe == false) {
           _showSwipeLimitDialog();
           if (mounted) _showSwipeLimitDialog();
@@ -307,7 +301,9 @@ class _UserDetailPageState extends State<UserDetailPage> {
         Navigator.pop(context);
       }
     } catch (e) {
-      debugPrint('❌ Error on like/match: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al dar like')));
     }
   }
 

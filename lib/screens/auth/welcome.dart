@@ -16,13 +16,10 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(),
               Column(
                 children: [
-                  Image.asset(
-                    'assets/images/logo_tindertec.png',
-                    height: 350,
-                  ),
+                  Image.asset('assets/images/logo_tindertec.png', height: 350),
                   const SizedBox(height: 20),
                   const Text(
-                    'Bienvenido a TINDERTEC',
+                    'Bienvenido a ConectaTec',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
