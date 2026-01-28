@@ -29,7 +29,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Conecta con estudiantes del Tec y encuentra nuevas amistades o algo más 😏',
+                    'Conecta con estudiantes universitarios y encuentra nuevas amistades o algo más 😏',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
