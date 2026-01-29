@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>MinimumOSVersion</key>
+	<string>15.0</string>
 	<key>NSCameraUsageDescription</key>
 	<string>ConectaTec necesita acceso a la cámara para que los usuarios puedan subir fotos a su perfil.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
