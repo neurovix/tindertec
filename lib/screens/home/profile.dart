@@ -536,6 +536,16 @@ class _ProfilePageState extends State<ProfilePage>
                                             ),
                                             SizedBox(height: 8),
                                             Text('Posicion: CEO & Programador'),
+                                            SizedBox(height: 8),
+                                            Text('Nombre: Octavio Valdes'),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Email: ovaldesfigueroa@gmail.com',
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'Posicion: Marketing & Diseñador',
+                                            ),
                                           ],
                                         ),
                                         actions: [
