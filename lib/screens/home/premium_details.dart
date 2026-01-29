@@ -1,9 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'package:tindertec/services/stripe_service.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:tindertec/services/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PremiumDetailsScreen extends StatefulWidget {
   const PremiumDetailsScreen({super.key});
@@ -323,6 +325,13 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
           _isProcessing = false;
         });
       }
+    }
+  }
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -693,6 +702,51 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                            children: [
+                              const TextSpan(
+                                text: 'Al suscribirte, aceptas nuestros ',
+                              ),
+                              TextSpan(
+                                text: 'Términos y Condiciones (EULA)',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    _openLink(
+                                      'https://neurovix.com.mx/apps/conectatec/eula',
+                                    );
+                                  },
+                              ),
+                              const TextSpan(text: ' y '),
+                              TextSpan(
+                                text: 'Política de Privacidad',
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    _openLink(
+                                      'https://neurovix.com.mx/apps/conectatec/privacy-policy',
+                                    );
+                                  },
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

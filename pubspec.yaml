@@ -46,6 +46,7 @@ dependencies:
   in_app_purchase: ^3.2.3
   in_app_purchase_storekit: ^0.4.7
   flutter_launcher_icons: ^0.14.4
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
