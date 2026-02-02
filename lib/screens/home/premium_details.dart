@@ -665,6 +665,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Semanal',
+                                duration: '7 dias',
                                 price: _getPrice(
                                   InAppPurchaseService.weeklyProductId,
                                   'Semanal',
@@ -677,6 +678,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Mensual',
+                                duration: '30 dias',
                                 price: _getPrice(
                                   InAppPurchaseService.monthlyProductId,
                                   'Mensual',
@@ -690,6 +692,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Semestral',
+                                duration: '180 dias',
                                 price: _getPrice(
                                   InAppPurchaseService.semiannualProductId,
                                   'Semestral',
@@ -738,7 +741,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
                                     _openLink(
-                                      'https://neurovix.com.mx/apps/conectatec/privacy-policy',
+                                      'https://neurovix.com.mx/apps/conectatec/privacy_policy',
                                     );
                                   },
                               ),
@@ -865,6 +868,7 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
 
   Widget _buildSubscriptionCard({
     required String title,
+    required String duration,
     required String price,
     required String productId,
   }) {
@@ -874,6 +878,16 @@ class _PremiumDetailsScreenState extends State<PremiumDetailsScreen> {
         Text(
           title,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          duration,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),

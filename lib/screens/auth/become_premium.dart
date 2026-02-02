@@ -676,6 +676,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Semanal',
+                                duration: '7 dias',
                                 price: _getPrice(
                                   InAppPurchaseService.weeklyProductId,
                                   'Semanal',
@@ -688,6 +689,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Mensual',
+                                duration: '30 dias',
                                 price: _getPrice(
                                   InAppPurchaseService.monthlyProductId,
                                   'Mensual',
@@ -701,6 +703,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
                             Expanded(
                               child: _buildSubscriptionCard(
                                 title: 'Semestral',
+                                duration: '180 dias',
                                 price: _getPrice(
                                   InAppPurchaseService.semiannualProductId,
                                   'Semestral',
@@ -925,6 +928,7 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
 
   Widget _buildSubscriptionCard({
     required String title,
+    required String duration,
     required String price,
     required String productId,
   }) {
@@ -934,6 +938,16 @@ class _BecomePremiumState extends State<BecomePremiumScreen> {
         Text(
           title,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          duration,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
